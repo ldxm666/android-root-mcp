@@ -347,7 +347,7 @@ class AndroidRootController:
         """
         通过 `dumpsys activity top` 提取原生 Android View 树（耗时仅 ~230ms）。
         相比 uiautomator，它保留了：
-        1. 混淆/真实的自定义 View 类名（如 com.baidu.BaiduMap...）
+        1. 混淆/真实的自定义 View 类名（如 com.example.app...）
         2. 16 进制资源锚点（如 #7f0a03fc app:id/search_box）—— 写 Xposed/LSPosed 钩子必备！
         3. GONE (G) / INVISIBLE (I) / VISIBLE (V) 隐藏视图状态！
         """

@@ -5,15 +5,26 @@ from typing import Any, Optional
 from .models import Condition, FormField, Selector, ShellCommand, Workflow
 
 CAPABILITIES = {
-    "version": "2.0.0",
-    "ui": ["ui_snapshot", "find_elements", "element_action", "wait_for_condition", "fill_form", "perform_gesture"],
+    "version": "2.1.0",
+    "ui": ["ui_snapshot", "ui_describe", "ui_query", "find_elements", "element_action",
+           "act", "wait_for_condition", "fill_form", "perform_gesture"],
+    "learning": ["learn"],
     "automation": ["run_workflow", "workflow_control", "saved_workflow", "shell_batch"],
     "device": ["device_connection", "device_doctor", "adb_command", "shell_execute", "device_control", "system_settings", "system_property", "agent_profile"],
     "apps": ["app_action", "app_permissions", "export_apks", "send_intent", "content_provider"],
     "data": ["device_files", "shared_preferences", "sqlite_database", "app_data_archive", "file_transfer_root"],
     "development": ["device_job", "device_diagnostics", "port_forward", "webview_control", "record_screen", "compare_screenshot", "deploy_and_verify_apk"],
+    "highlights": {
+        "ui_describe": "read the screen as OS-reported controls (role/label/actions/region), never OCR",
+        "ui_query": "find controls by OS-derived semantics; semantic_key survives layout changes",
+        "act": "perform an interaction AND report what changed, in one round trip; supports role/label/semantic_key addressing",
+        "learn": "probe the controls the OS does not name, refuse destructive ones, persist the observed effect",
+    },
     "guidance": [
-        "Use semantic selectors and workflow conditions instead of screenshots/fixed sleeps.",
+        "Start with ui_describe: it reads the screen as OS-reported controls (role/label/actions/region) instead of pixels, so understanding a screen needs no screenshot.",
+        "Prefer act() for a single step: it performs the interaction and returns what actually changed, saving a round trip.",
+        "Address controls by semantics (role, label_contains, semantic_key) rather than coordinates; semantic_key survives layout changes.",
+        "When the OS names nothing, call learn() to probe unnamed controls; destructive and payment controls are refused rather than pressed.",
         "Pre-plan steps once with run_workflow; use shell_batch for independent CLI operations in one ADB round trip.",
         "All selector predicates are ANDed; ambiguous actions require nth. Index selectors require snapshot_id.",
         "Use return_ui=false within manual loops, or workflow.return_ui=false for headless jobs.",

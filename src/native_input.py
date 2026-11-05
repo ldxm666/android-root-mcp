@@ -10,7 +10,7 @@ Everything here is optional and failure-tolerant. If the daemon is absent, dead,
 or the ROM blocks the devnode, :meth:`available` returns False and the caller
 falls back to its previous transport. No method may block indefinitely: the
 server serialises every tool behind one global lock, so a hung call would freeze
-all 37 tools behind it.
+all 57 tools behind it.
 
 The daemon speaks one JSON object per line over TCP on loopback, reached through
 ``adb forward``. Protocol: ``ping | tap x y | long_press x y ms | swipe x1 y1 x2

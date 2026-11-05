@@ -3,8 +3,8 @@
 Two rules for this file: every number here was observed on the device, and anything not observed is
 labelled **unmeasured** rather than estimated.
 
-Device: Xiaomi 2210132C, Android 16 / SDK 36, arm64, shell uid 2000, serial `975aaf17`.
-Host: Windows, `D:\Tools\platform-tools\adb.exe`, JDK 21, build-tools 36.0.0.
+Device: Xiaomi 2210132C, Android 16 / SDK 36, arm64, shell uid 2000, serial `<your-device-serial>`.
+Host: Windows, `adb` from `ADB_PATH` (or whatever is on `PATH`), JDK 21, build-tools 36.0.0.
 
 ---
 

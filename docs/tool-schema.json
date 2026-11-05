@@ -1,11 +1,11 @@
 {
   "server": "android-root-mcp",
-  "version": "2.0.0",
-  "tool_count": 53,
+  "version": "2.1.0",
+  "tool_count": 57,
   "tools": [
     {
       "name": "get_device_status",
-      "description": "\n获取当前连接的 Android 设备状态：设备型号、Android/SDK 版本、实际 Root UID、\n当前前台包名与 Activity、屏幕分辨率及 UIAutomator2 可提供的亮屏状态。\n",
+      "description": "\n    获取当前连接的 Android 设备状态：设备型号、Android/SDK 版本、实际 Root UID、\n    当前前台包名与 Activity、屏幕分辨率及 UIAutomator2 可提供的亮屏状态。\n    ",
       "inputSchema": {
         "properties": {},
         "title": "get_device_statusArguments",
@@ -27,7 +27,7 @@
     },
     {
       "name": "get_ui_tree",
-      "description": "\n【核心感知工具 - 替代慢速截图】通过高速 RPC 提取当前屏幕的语义化 UI 控件树。\n返回每个元素的 `[#index]` 编号、类名、文本 (`text`)、描述 (`desc`)、`id`、中心坐标与可交互标志 (`flags`)。\n后续可直接调用 `tap_element(index=N)` 或 `tap_element(text=\"...\")` 精准操作！\n",
+      "description": "\n    【核心感知工具 - 替代慢速截图】通过高速 RPC 提取当前屏幕的语义化 UI 控件树。\n    返回每个元素的 `[#index]` 编号、类名、文本 (`text`)、描述 (`desc`)、`id`、中心坐标与可交互标志 (`flags`)。\n    后续可直接调用 `tap_element(index=N)` 或 `tap_element(text=\"...\")` 精准操作！\n    ",
       "inputSchema": {
         "properties": {
           "only_interactive": {
@@ -68,7 +68,7 @@
     },
     {
       "name": "inspect_view_hierarchy",
-      "description": "\n【Android 开发 & LSPosed 逆向专用】通过 `dumpsys activity top` 提取 ROM 暴露的原生 Android View 层级树。\n具体耗时和可用信息取决于设备；相比 `get_ui_tree`，它可能额外提供：\n1. 真实的混淆/自定义 View 类名（如 `com.baidu.BaiduMap...`）\n2. 16 进制资源 ID 锚点（如 `hex=0x7f0a03fc id=app:id/search_box`）\n3. 被隐藏的 `GONE [G]` / `INVISIBLE [I]` 视图节点！\n",
+      "description": "\n    【仅用于已知能吐出 View 树的 ROM】通过 `dumpsys activity top` 取 Activity/Task 记录。\n    注意：本机 HyperOS（Android 16）实测该命令**不返回任何 View 层级**——`mID=`、`mText`、\n    `android:text` 均为 0 行，微信整份输出只有 776 字节。所以在该机型上它拿不到控件信息，\n    需要理解界面请直接用 `ui_describe`（OS 语义，非 OCR）。\n    在确实支持 AOSP 式 `dumpsys activity top` 的 ROM 上，本工具可能额外给出：\n    1. 真实的自定义 View 类名；2. 16 进制资源 ID 锚点；3. 被隐藏的 GONE/INVISIBLE 节点。\n    ",
       "inputSchema": {
         "properties": {
           "keyword": {
@@ -109,7 +109,7 @@
     },
     {
       "name": "screenshot_annotated",
-      "description": "\n【视觉兜底与界面审查工具】获取手机屏幕截图。安全图层/DRM 等限制仍可能导致空白或拒绝。\n默认开启 Set-of-Mark (`annotate_elements=True`)，在图上直接标出 `[#0]`, `[#1]` 红框编号，\n看图后无需猜像素坐标，直接调用 `tap_element(index=编号)` 即可！\n注意：日常操作请优先使用 `get_ui_tree`，仅在 Canvas/地图渲染/游戏或视觉验证时调用本工具。\n",
+      "description": "\n    【视觉兜底与界面审查工具】获取手机屏幕截图。安全图层/DRM 等限制仍可能导致空白或拒绝。\n    默认开启 Set-of-Mark (`annotate_elements=True`)，在图上直接标出 `[#0]`, `[#1]` 红框编号，\n    看图后无需猜像素坐标，直接调用 `tap_element(index=编号)` 即可！\n    注意：日常操作请优先使用 `get_ui_tree`，仅在 Canvas/地图渲染/游戏或视觉验证时调用本工具。\n    ",
       "inputSchema": {
         "properties": {
           "annotate_elements": {
@@ -144,7 +144,7 @@
     },
     {
       "name": "tap_element",
-      "description": "\n智能语义点击工具。支持按 `#index`、`text`、`text_contains`、`resource_id`、`description` 或 `(x, y)` 点击。\n默认在点击完成后自动返回新界面的 `post_ui` 控件树，实现单回合感知闭环！\n",
+      "description": "\n    智能语义点击工具。支持按 `#index`、`text`、`text_contains`、`resource_id`、`description` 或 `(x, y)` 点击。\n    点击即返回确认与耗时，不默认回抓整棵树——观察交给 ui_snapshot 的差异模式，节奏才跟得上手。\n    ",
       "inputSchema": {
         "properties": {
           "index": {
@@ -257,8 +257,8 @@
             "type": "integer"
           },
           "return_ui_after": {
-            "default": true,
-            "description": "点击后是否自动抓取并返回新界面的 UI 控件树（省去下一步手动调用 get_ui_tree），默认 True",
+            "default": false,
+            "description": "点击后是否附带完整新界面 UI 树。默认 False——这次重抓是全流程里最贵的一步（全树约 200ms + 大量上下文）；连续点击时保持 False，需要看变化用 ui_snapshot(since_snapshot_id=...) 只取差异",
             "title": "Return Ui After",
             "type": "boolean"
           }
@@ -282,7 +282,7 @@
     },
     {
       "name": "input_text",
-      "description": "\n极速中文/Unicode 文本输入工具。\n可一步完成『聚焦输入框 -> 清空旧内容 -> 注入中文字符串 -> 按回车提交 -> 返回新界面 UI 树』，并自动保护系统原输入法不被篡改。\n",
+      "description": "\n    极速中文/Unicode 文本输入工具。\n    可一步完成『聚焦输入框 -> 清空旧内容 -> 注入中文字符串 -> 按回车提交 -> 返回新界面 UI 树』，并自动保护系统原输入法不被篡改。\n    ",
       "inputSchema": {
         "properties": {
           "text": {
@@ -342,8 +342,8 @@
             "type": "boolean"
           },
           "return_ui_after": {
-            "default": true,
-            "description": "输入后是否自动返回最新 UI 控件树，默认 True",
+            "default": false,
+            "description": "输入后是否附带完整 UI 树。默认 False——每次重抓全树约 200ms 并吃掉大量上下文；要看结果用 ui_snapshot(since_snapshot_id=...) 只取差异",
             "title": "Return Ui After",
             "type": "boolean"
           }
@@ -370,7 +370,7 @@
     },
     {
       "name": "swipe_screen",
-      "description": "\n智能滑动与滚动查找工具。\n支持四向滑动、自定义坐标拖拽，或设置 `scroll_to_text=\"目标文字\"` 让工具自动滚屏寻找目标！\n",
+      "description": "\n    智能滑动与滚动查找工具。\n    支持四向滑动、自定义坐标拖拽，或设置 `scroll_to_text=\"目标文字\"` 让工具自动滚屏寻找目标！\n    ",
       "inputSchema": {
         "properties": {
           "direction": {
@@ -464,8 +464,8 @@
             "type": "integer"
           },
           "return_ui_after": {
-            "default": true,
-            "description": "滑动后是否自动返回最新 UI 控件树，默认 True",
+            "default": false,
+            "description": "滑动后是否附带完整 UI 树。默认 False——连续滑动时每步重抓全树会拖慢节奏；滚屏找元素请直接用 scroll_to_text",
             "title": "Return Ui After",
             "type": "boolean"
           }
@@ -505,8 +505,8 @@
             "type": "integer"
           },
           "return_ui_after": {
-            "default": true,
-            "description": "是否自动返回按键后的最新 UI 控件树，默认 True",
+            "default": false,
+            "description": "按键后是否附带完整 UI 树。默认 False——按返回键后通常只需知道动作已送达，需要时再 ui_snapshot",
             "title": "Return Ui After",
             "type": "boolean"
           }
@@ -530,7 +530,7 @@
     },
     {
       "name": "batch_ui_actions",
-      "description": "\n【王牌去人机感工具】单次调用连续执行多步手机操作流水线！\n当能够预判接下来的 2~6 步操作时（例如：启动应用 -> 等待首页 -> 点击搜索框 -> 输入关键词 -> 按回车），\n必须使用本工具一次性下发，彻底告别『点一下停几秒等下一轮』的卡顿体验！\n若中途某一步失败，会自动中断并返回当前停留页面的 UI 树供纠错。\n",
+      "description": "\n    【王牌去人机感工具】单次调用连续执行多步手机操作流水线！\n    当能够预判接下来的 2~6 步操作时（例如：启动应用 -> 等待首页 -> 点击搜索框 -> 输入关键词 -> 按回车），\n    必须使用本工具一次性下发，彻底告别『点一下停几秒等下一轮』的卡顿体验！\n    若中途某一步失败，会自动中断并返回当前停留页面的 UI 树供纠错。\n    ",
       "inputSchema": {
         "properties": {
           "steps": {
@@ -543,8 +543,8 @@
             "type": "array"
           },
           "return_ui_after": {
-            "default": true,
-            "description": "批量执行完毕后是否返回最终 UI 控件树，默认 True",
+            "default": false,
+            "description": "批量执行完毕后是否附带最终 UI 树。默认 False——流水线跑完再由调用方决定是否观察；流水线中途失败仍会返回当时页面供纠错",
             "title": "Return Ui After",
             "type": "boolean"
           }
@@ -571,7 +571,7 @@
     },
     {
       "name": "root_shell",
-      "description": "\n【Root 上帝模式直通车】通过 `su -c` 在手机上执行任意 Root 特权 Shell 命令。\n可执行诸如修改系统属性 (`resetprop`/`setprop`)、查看内核/挂载信息、操作 `/data/` 私有目录、管理防火墙等任意底层指令。\n",
+      "description": "\n    【Root 上帝模式直通车】通过 `su -c` 在手机上执行任意 Root 特权 Shell 命令。\n    可执行诸如修改系统属性 (`resetprop`/`setprop`)、查看内核/挂载信息、操作 `/data/` 私有目录、管理防火墙等任意底层指令。\n    ",
       "inputSchema": {
         "properties": {
           "command": {
@@ -608,12 +608,12 @@
     },
     {
       "name": "start_activity_root",
-      "description": "\n【Root 页面直达工具】利用 Root 权限强行穿透拉起任意内部私有 Activity (`exported=false`) 或 DeepLink Scheme，\n直接一步跨越繁琐的开屏广告与多级菜单跳转！\n",
+      "description": "\n    【Root 页面直达工具】利用 Root 权限强行穿透拉起任意内部私有 Activity (`exported=false`) 或 DeepLink Scheme，\n    直接一步跨越繁琐的开屏广告与多级菜单跳转！\n    ",
       "inputSchema": {
         "properties": {
           "package": {
             "default": "",
-            "description": "应用包名（如 'com.baidu.BaiduMap' 或 'com.android.settings'）",
+            "description": "应用包名（如 'com.example.app' 或 'com.android.settings'）",
             "title": "Package",
             "type": "string"
           },
@@ -668,8 +668,8 @@
             "type": "boolean"
           },
           "return_ui_after": {
-            "default": true,
-            "description": "启动后是否自动等待并返回界面 UI 树，默认 True",
+            "default": false,
+            "description": "启动后是否附带界面 UI 树。默认 False——启动本身有耗时，重抓全树会让等待翻倍；需要确认落地页再 ui_snapshot",
             "title": "Return Ui After",
             "type": "boolean"
           }
@@ -730,11 +730,11 @@
     },
     {
       "name": "inspect_app_data",
-      "description": "\n【零界面数据穿透工具】直接通过 Root 读取或查询 `/data/data/<package>/` 下的 SharedPreferences 配置与 SQLite 数据库！\n无需打开应用界面，直接核查开关状态、缓存数据与内部表记录。\n",
+      "description": "\n    【零界面数据穿透工具】直接通过 Root 读取或查询 `/data/data/<package>/` 下的 SharedPreferences 配置与 SQLite 数据库！\n    无需打开应用界面，直接核查开关状态、缓存数据与内部表记录。\n    ",
       "inputSchema": {
         "properties": {
           "package": {
-            "description": "目标应用包名（如 'com.baidu.BaiduMap'）",
+            "description": "目标应用包名（如 'com.example.app'）",
             "title": "Package",
             "type": "string"
           },
@@ -785,7 +785,7 @@
     },
     {
       "name": "query_system_provider",
-      "description": "\n【后台零界面取证工具】无需下拉通知栏或打开短信 App，直接通过 Root 提取通知栏消息、短信验证码或读写系统剪贴板。\n",
+      "description": "\n    【后台零界面取证工具】无需下拉通知栏或打开短信 App，直接通过 Root 提取通知栏消息、短信验证码或读写系统剪贴板。\n    ",
       "inputSchema": {
         "properties": {
           "source": {
@@ -820,12 +820,12 @@
     },
     {
       "name": "read_logcat_smart",
-      "description": "\n【智能 Logcat 诊断工具】支持按包名自动绑定进程 PID、一键提取闪退堆栈 (`crash_only=True`)、按 Tag 或关键词精准过滤日志。\n",
+      "description": "\n    【智能 Logcat 诊断工具】支持按包名自动绑定进程 PID、一键提取闪退堆栈 (`crash_only=True`)、按 Tag 或关键词精准过滤日志。\n    ",
       "inputSchema": {
         "properties": {
           "package": {
             "default": "",
-            "description": "按应用包名自动解析 PID 过滤日志（如 'com.baidu.BaiduMap'）",
+            "description": "按应用包名自动解析 PID 过滤日志（如 'com.example.app'）",
             "title": "Package",
             "type": "string"
           },
@@ -885,7 +885,7 @@
     },
     {
       "name": "inspect_lsposed",
-      "description": "\n【LSPosed / Xposed / KernelSU 专属调试工具】\n直接通过 Root 读取 `/data/adb/lspd/log/modules_*.log` 最新模块日志与已安装的 KernelSU/Zygisk 模块列表，\n快速验证 Hook 是否生效、是否有 StackOverflowError / ClassNotFoundException 等异常！\n",
+      "description": "\n    【LSPosed / Xposed / KernelSU 专属调试工具】\n    直接通过 Root 读取 `/data/adb/lspd/log/modules_*.log` 最新模块日志与已安装的 KernelSU/Zygisk 模块列表，\n    快速验证 Hook 是否生效、是否有 StackOverflowError / ClassNotFoundException 等异常！\n    ",
       "inputSchema": {
         "properties": {
           "keyword": {
@@ -926,7 +926,7 @@
     },
     {
       "name": "deploy_and_verify_apk",
-      "description": "\n【Android / LSPosed 开发一键联调闭环】\n单次调用自动完成：\n1. 安装本地 APK (`adb install -r -d`)\n2. 记录日志起始时间，保留全局 Logcat 缓冲池\n3. 强杀并冷启动目标宿主应用 (`am force-stop` + 启动)\n4. 等待页面渲染与 Hook 注入\n5. 自动汇总返回：是否有 Crash 堆栈 + 目标应用 Logcat + LSPosed 模块最新日志 + 当前屏幕 UI 控件树！\n",
+      "description": "\n    【Android / LSPosed 开发一键联调闭环】\n    单次调用自动完成：\n    1. 安装本地 APK (`adb install -r -d`)\n    2. 记录日志起始时间，保留全局 Logcat 缓冲池\n    3. 强杀并冷启动目标宿主应用 (`am force-stop` + 启动)\n    4. 等待页面渲染与 Hook 注入\n    5. 自动汇总返回：是否有 Crash 堆栈 + 目标应用 Logcat + LSPosed 模块最新日志 + 当前屏幕 UI 控件树！\n    ",
       "inputSchema": {
         "properties": {
           "apk_path": {
@@ -935,7 +935,7 @@
             "type": "string"
           },
           "target_package": {
-            "description": "安装后需要强杀并冷启动验证的目标包名（如果是调试 LSPosed 模块，填宿主包名如 'com.baidu.BaiduMap'；如果是普通 App，填自身包名）",
+            "description": "安装后需要强杀并冷启动验证的目标包名（如果是调试 LSPosed 模块，填宿主包名如 'com.example.app'；如果是普通 App，填自身包名）",
             "title": "Target Package",
             "type": "string"
           },
@@ -981,7 +981,7 @@
     },
     {
       "name": "file_transfer_root",
-      "description": "\n【Root 级跨端文件推拉】利用 `/data/local/tmp` 中转与 Root 提权，支持直接拉取或替换 `/data/data/`、`/data/adb/` 等任意私有目录文件。\n",
+      "description": "\n    【Root 级跨端文件推拉】利用 `/data/local/tmp` 中转与 Root 提权，支持直接拉取或替换 `/data/data/`、`/data/adb/` 等任意私有目录文件。\n    ",
       "inputSchema": {
         "properties": {
           "action": {
@@ -1030,7 +1030,7 @@
     },
     {
       "name": "optimize_device_for_agent",
-      "description": "\n【设备极速模式调优】一键将手机调校为最适合 AI Agent 高速操控与调试的状态：\n1. 关闭系统窗口与过渡动画 (`animation_scale = 0`)，消除页面切换等待时间\n2. 开启连接电源时屏幕常亮 (`stay_on_while_plugged_in`)\n3. 自动唤醒屏幕并滑开锁屏层 (`wm dismiss-keyguard`)\n",
+      "description": "\n    【设备极速模式调优】一键将手机调校为最适合 AI Agent 高速操控与调试的状态：\n    1. 关闭系统窗口与过渡动画 (`animation_scale = 0`)，消除页面切换等待时间\n    2. 开启连接电源时屏幕常亮 (`stay_on_while_plugged_in`)\n    3. 自动唤醒屏幕并滑开锁屏层 (`wm dismiss-keyguard`)\n    ",
       "inputSchema": {
         "properties": {
           "zero_animation": {
@@ -1434,6 +1434,42 @@
                 ],
                 "default": null,
                 "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
               }
             },
             "title": "Selector",
@@ -1463,8 +1499,8 @@
       }
     },
     {
-      "name": "element_action",
-      "description": "Act on exactly one matching element: tap/long_click/double_click/set_text/append_text/clear/check/uncheck/read. Ambiguous/stale/disabled targets fail explicitly.",
+      "name": "act",
+      "description": "One human-shaped verb: perform an interaction AND report what changed, in a single round trip. action = tap/long_click/double_click/set_text/append_text/clear/check/uncheck/read/scroll/key. Target a control with `selector` (supports role, label_contains, semantic_key, text, resource_id - semantic addressing needs no coordinates) or pass x/y. Returns `effect`, a plain sentence describing what actually happened (navigation, dialog appeared, list scrolled, no visible change) plus the new snapshot_id, so you do NOT need a follow-up perceive call. Set observe=false for tight loops where you will observe later yourself.",
       "inputSchema": {
         "$defs": {
           "Selector": {
@@ -1706,6 +1742,575 @@
                 ],
                 "default": null,
                 "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "action": {
+            "default": "tap",
+            "title": "Action",
+            "type": "string"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Selector"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "value": {
+            "default": "",
+            "title": "Value",
+            "type": "string"
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Y"
+          },
+          "direction": {
+            "default": "up",
+            "title": "Direction",
+            "type": "string"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Duration Ms"
+          },
+          "wait_timeout": {
+            "default": 3.0,
+            "title": "Wait Timeout",
+            "type": "number"
+          },
+          "observe": {
+            "default": true,
+            "title": "Observe",
+            "type": "boolean"
+          }
+        },
+        "title": "actArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "actDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "learn",
+      "description": "Teach the agent what an app's unnamed controls DO, by probing and remembering. Many apps expose no label for their buttons (measured: 56.7% of tappable controls carry no text/description/id, and some apps report no clickable flag at all), so the only honest way to learn them is to act and observe. This taps one unknown control at a time, diffs the screen before/after, and persists the observed effect (opened a screen / dialog appeared / list scrolled / no visible change) under the current app+activity. Destructive and financial controls (delete, pay, logout, uninstall, password fields) are refused and recorded as refused, never pressed. Results appear as `learned_effect` on later ui_describe calls, so the agent stops guessing. budget = how many controls to probe this call (1-5).",
+      "inputSchema": {
+        "properties": {
+          "budget": {
+            "default": 2,
+            "title": "Budget",
+            "type": "integer"
+          },
+          "settle_ms": {
+            "default": 250,
+            "title": "Settle Ms",
+            "type": "integer"
+          },
+          "allow_restore": {
+            "default": true,
+            "title": "Allow Restore",
+            "type": "boolean"
+          }
+        },
+        "title": "learnArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "learnDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "ui_describe",
+      "description": "Read the screen as CONTROLS, not pixels. Each tappable/viewable element is described from what Android itself reports - view class, resource-id name, accessibility description, supported action flags - never from OCR or vision. Returns a one-line summary, an ordered control list with role/label/actions/state, screen structure (top bar, bottom nav, dialogs, scroll containers, primary action), and a coverage line telling you how much the OS actually named. Prefer this over screenshots for understanding a screen.",
+      "inputSchema": {
+        "properties": {
+          "max_controls": {
+            "default": 40,
+            "title": "Max Controls",
+            "type": "integer"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Role"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Region"
+          },
+          "include_containers": {
+            "default": false,
+            "title": "Include Containers",
+            "type": "boolean"
+          }
+        },
+        "title": "ui_describeArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "ui_describeDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "ui_query",
+      "description": "Find controls by OS-derived semantics instead of coordinates or pixels. Filter by role (button/text_input/toggle/tab/nav_back/nav_close/list_item/search), by label substring, by text substring, by stable semantic_key, or by region. Returns matches with their semantic_key, which stays valid when the layout moves - use it to replay an action on the same control later without storing a tap position.",
+      "inputSchema": {
+        "properties": {
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Role"
+          },
+          "label_contains": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label Contains"
+          },
+          "text_contains": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Contains"
+          },
+          "semantic_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Semantic Key"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Region"
+          },
+          "enabled_only": {
+            "default": true,
+            "title": "Enabled Only",
+            "type": "boolean"
+          },
+          "max_results": {
+            "default": 25,
+            "title": "Max Results",
+            "type": "integer"
+          }
+        },
+        "title": "ui_queryArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "ui_queryDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "element_action",
+      "description": "Act on exactly one matching element: tap/long_click/double_click/set_text/append_text/clear/check/uncheck/read. Ambiguous/stale/disabled targets fail explicitly. Returns a compact ack, not a tree: set return_ui=true only when the next step needs the whole page, otherwise observe with ui_snapshot(since_snapshot_id=...) and pay only for the delta.",
+      "inputSchema": {
+        "$defs": {
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
               }
             },
             "title": "Selector",
@@ -1732,7 +2337,7 @@
             "type": "number"
           },
           "return_ui": {
-            "default": true,
+            "default": false,
             "title": "Return Ui",
             "type": "boolean"
           },
@@ -2098,6 +2703,42 @@
                 ],
                 "default": null,
                 "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
               }
             },
             "title": "Selector",
@@ -2133,7 +2774,7 @@
     },
     {
       "name": "fill_form",
-      "description": "Fill several fields (including Chinese/Emoji) and optionally submit in one tool call. Stops at the first failed field; returns final UI once.",
+      "description": "Fill several fields (including Chinese/Emoji) and optionally submit in one tool call. Stops at the first failed field. One tree dump total, not one per field.",
       "inputSchema": {
         "$defs": {
           "FormField": {
@@ -2394,6 +3035,42 @@
                 ],
                 "default": null,
                 "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
               }
             },
             "title": "Selector",
@@ -2420,7 +3097,7 @@
             "default": null
           },
           "return_ui": {
-            "default": true,
+            "default": false,
             "title": "Return Ui",
             "type": "boolean"
           }
@@ -2776,6 +3453,42 @@
                 ],
                 "default": null,
                 "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
               }
             },
             "title": "Selector",
@@ -3418,6 +4131,42 @@
                 ],
                 "default": null,
                 "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
               }
             },
             "title": "Selector",
@@ -4949,6 +5698,42 @@
                 ],
                 "default": null,
                 "title": "Snapshot Id"
+              },
+              "role": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Role"
+              },
+              "label_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Label Contains"
+              },
+              "semantic_key": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Semantic Key"
               }
             },
             "title": "Selector",

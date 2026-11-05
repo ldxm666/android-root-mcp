@@ -6,7 +6,7 @@ __pycache__/
 .test-state/
 .artifacts/
 state/
-build/
+/native/osbridge/build/
 dist/
 *.egg-info/
 *.log
@@ -19,3 +19,34 @@ mcp_config.local.json
 
 # local benchmarking scratch
 _bench/
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# patch / merge residue
+*.orig
+*.bak
+*.rej
+
+# crash dumps and coverage
+core
+core.*
+*.dmp
+.coverage
+htmlcov/
+.mypy_cache/
+.tox/
+
+# release output and captured media
+*.zip
+*.sha256
+*.mp4
+
+# local publish scaffolding (must never be committed)
+_gh_*.py

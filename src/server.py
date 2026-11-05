@@ -415,7 +415,7 @@ def root_shell(
 
 @locked_tool
 def start_activity_root(
-    package: Annotated[str, Field(description="应用包名（如 'com.baidu.BaiduMap' 或 'com.android.settings'）")] = "",
+    package: Annotated[str, Field(description="应用包名（如 'com.example.app' 或 'com.android.settings'）")] = "",
     activity: Annotated[
         str,
         Field(description="目标 Activity 名称（支持未导出的私有 Activity，如 '.map.main.MainActivity'），留空则启动应用默认主页"),
@@ -479,7 +479,7 @@ def manage_app(
 
 @locked_tool
 def inspect_app_data(
-    package: Annotated[str, Field(description="目标应用包名（如 'com.baidu.BaiduMap'）")],
+    package: Annotated[str, Field(description="目标应用包名（如 'com.example.app'）")],
     mode: Annotated[
         str,
         Field(
@@ -565,7 +565,7 @@ def query_system_provider(
 
 @locked_tool
 def read_logcat_smart(
-    package: Annotated[str, Field(description="按应用包名自动解析 PID 过滤日志（如 'com.baidu.BaiduMap'）")] = "",
+    package: Annotated[str, Field(description="按应用包名自动解析 PID 过滤日志（如 'com.example.app'）")] = "",
     tag: Annotated[str, Field(description="按 Log Tag 过滤（如 'MapAdKiller'、'AndroidRuntime'）")] = "",
     grep_keyword: Annotated[str, Field(description="按正文中包含的关键词过滤")] = "",
     level: Annotated[str, Field(description="最低日志级别：'V', 'D', 'I', 'W', 'E', 'F'，默认 'I'")] = "I",
@@ -614,7 +614,7 @@ def deploy_and_verify_apk(
     apk_path: Annotated[str, Field(description="本地电脑上编译好的 APK 绝对路径")],
     target_package: Annotated[
         str,
-        Field(description="安装后需要强杀并冷启动验证的目标包名（如果是调试 LSPosed 模块，填宿主包名如 'com.baidu.BaiduMap'；如果是普通 App，填自身包名）"),
+        Field(description="安装后需要强杀并冷启动验证的目标包名（如果是调试 LSPosed 模块，填宿主包名如 'com.example.app'；如果是普通 App，填自身包名）"),
     ],
     launch_activity: Annotated[str, Field(description="可选：指定启动的具体 Activity")] = "",
     wait_seconds: Annotated[float, Field(description="启动后等待钩子执行与页面加载的秒数，默认 3.5 秒")] = 3.5,

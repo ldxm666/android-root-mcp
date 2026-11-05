@@ -52,7 +52,9 @@ if (-not $AdbPath) {
     else {
         $adbCandidate = Get-Command adb.exe -ErrorAction SilentlyContinue
         if ($adbCandidate) { $AdbPath = $adbCandidate.Source }
-        elseif (Test-Path -LiteralPath "D:\Tools\platform-tools\adb.exe") { $AdbPath = "D:\Tools\platform-tools\adb.exe" }
+        elseif ($env:LOCALAPPDATA -and (Test-Path -LiteralPath (Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"))) {
+            $AdbPath = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"
+        }
     }
 }
 if ($AdbPath -and (-not (Test-Path -LiteralPath $AdbPath) -or $AdbPath -match '\.(bat|cmd)$')) {

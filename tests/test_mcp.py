@@ -8,7 +8,7 @@ from src import server
 
 def test_tool_registration_schemas():
     tools = asyncio.run(server.mcp.list_tools())
-    assert len(tools) == 53
+    assert len(tools) == 57
     assert len({t.name for t in tools}) == len(tools)
     for tool in tools:
         jsonschema.Draft202012Validator.check_schema(tool.inputSchema)
@@ -21,7 +21,7 @@ def test_resource_and_prompt():
 
 def test_catalog_without_device():
     content, structured = asyncio.run(server.mcp.call_tool("tool_catalog", {}))
-    assert structured["version"] == "2.0.0"
+    assert structured["version"] == "2.1.0"
 
 
 def test_unknown_workflow_rejected_by_mcp_before_handler(monkeypatch):

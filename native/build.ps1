@@ -7,17 +7,33 @@
   Usage:
     .\build.ps1                 # build, push, chmod
     .\build.ps1 -NoPush         # build only
-    .\build.ps1 -Serial 975aaf17
+    .\build.ps1 -Serial <your-device-serial>
 #>
 [CmdletBinding()]
 param(
     [string]$Serial = $env:ANDROID_SERIAL,
-    [string]$Adb    = "D:\Tools\platform-tools\adb.exe",
+    [string]$Adb    = $env:ADB_PATH,
     [switch]$NoPush
 )
 
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
+if (-not $Adb) {
+    $onPathAdb = Get-Command adb.exe -ErrorAction SilentlyContinue
+    if ($onPathAdb) { $Adb = $onPathAdb.Source }
+    else {
+        $sdkAdb = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"
+        if ($env:LOCALAPPDATA -and (Test-Path -LiteralPath $sdkAdb)) { $Adb = $sdkAdb }
+    }
+}
+if (-not $Adb) {
+    $onPathAdb = Get-Command adb.exe -ErrorAction SilentlyContinue
+    if ($onPathAdb) { $Adb = $onPathAdb.Source }
+    else {
+        $sdkAdb = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools\adb.exe"
+        if ($env:LOCALAPPDATA -and (Test-Path -LiteralPath $sdkAdb)) { $Adb = $sdkAdb }
+    }
+}
 $src  = Join-Path $root "pfdaemon\com\pf\Daemon.java"
 $outDir   = Join-Path $root "pfdaemon\classes"
 $dexDir   = Join-Path $root "pfdaemon\out"
@@ -31,7 +47,6 @@ if (-not (Test-Path $src)) { Fail "source not found: $src" }
 $javac = $null
 $candidates = @()
 if ($env:JAVA_HOME) { $candidates += (Join-Path $env:JAVA_HOME "bin\javac.exe") }
-$candidates += @("D:\JDK\bin\javac.exe", "D:\JDK-17\bin\javac.exe")
 $onPath = Get-Command javac.exe -ErrorAction SilentlyContinue
 if ($onPath) { $candidates += $onPath.Source }
 foreach ($c in $candidates) { if ($c -and (Test-Path $c)) { $javac = $c; break } }

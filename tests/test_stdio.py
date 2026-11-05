@@ -19,9 +19,9 @@ def test_real_stdio_protocol_without_device(tmp_path):
                 async with ClientSession(reader, writer) as session:
                     await session.initialize()
                     listing = await session.list_tools()
-                    assert len(listing.tools) == 53
+                    assert len(listing.tools) == 57
                     catalog = await session.call_tool("tool_catalog", {})
-                    assert not catalog.isError and catalog.structuredContent["version"] == "2.0.0"
+                    assert not catalog.isError and catalog.structuredContent["version"] == "2.1.0"
                     workflow = await session.call_tool("run_workflow", {"workflow": {"steps": [{"action": "sleep", "ms": 0}], "return_ui": False}})
                     assert not workflow.isError and workflow.structuredContent["success"]
                     invalid = await session.call_tool("run_workflow", {"workflow": {"steps": [{"action": "not_a_valid_action"}]}})

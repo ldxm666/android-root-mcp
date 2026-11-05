@@ -17,6 +17,7 @@ import random
 import re
 import random
 import statistics
+import shutil
 import subprocess
 import sys
 import time
@@ -25,8 +26,8 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 STATE = HERE / "_state.json"
 
-DEF_ADB = r"D:\Tools\platform-tools\adb.exe"
-DEF_SERIAL = "975aaf17"
+DEF_ADB = os.environ.get("ADB_PATH") or shutil.which("adb") or "adb"
+DEF_SERIAL = os.environ.get("ANDROID_SERIAL", "")
 DEVICE_DIR = "/data/local/tmp"
 JAR_NAME = "osbridge.jar"
 DEV_JAR = f"{DEVICE_DIR}/{JAR_NAME}"

@@ -1,8 +1,10 @@
 {
   "name": "android-root-suite",
-  "description": "Root Android 开发套件：53 个 MCP 工具，包含原生语义交互、条件工作流、批量 Shell、Root 数据与设置、后台任务、WebView DOM 和开发验证。",
-  "version": "2.0.0",
+  "description": "Root Android 开发套件：57 个 MCP 工具。从系统上报的数据解析控件语义（role/label/actions，不做 OCR、不编造名字）、常驻原生输入守护进程（点击 40.8ms、滑动 300ms 手势 310.9ms）、以及对系统未命名控件的「试探并记住」学习；另含条件工作流、批量 Shell、Root 数据与设置、后台任务、WebView DOM 和开发验证。",
+  "version": "2.1.0",
   "suggestedPrompts": [
+    "用 ui_describe 读出当前界面有哪些控件、各自能做什么",
+    "用 learn 试探界面上没有名字的控件，并记住点下去会发生什么",
     "检查设备和实际 Root 能力，获取精简 UI 快照",
     "把多步操作做成含条件等待和断言的可保存工作流",
     "批量检查应用状态、私有配置与 SQLite 数据",

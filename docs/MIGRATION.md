@@ -1,6 +1,6 @@
 # 从 v1 升级到 v2
 
-19 个原工具名和主要入参保留。新增能力通过 34 个新工具提供；建议新的自动化优先使用 `run_workflow` 和完整 resource-id 选择器。
+19 个原工具名和主要入参保留；当前版本共 57 个工具（v1 的 19 个全部保留）。建议新的自动化优先用 `ui_describe` 读屏、`act` 单步操作、`run_workflow` 串联，并以语义条件（`role` / `label_contains` / `semantic_key`）代替坐标与完整 resource-id。
 
 | 原行为 | v2 行为 / 迁移方式 |
 | --- | --- |

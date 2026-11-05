@@ -4,10 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "android-root-mcp"
-version = "2.0.0"
+version = "2.1.0"
 description = "Root Android MCP with semantic automation, validated workflows, batch shell, data management, jobs and WebView DOM"
 readme = "README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "ldxm666" }]
+keywords = ["mcp", "android", "adb", "automation", "uiautomator", "accessibility", "root"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Testing",
+]
 dependencies = [
     "mcp>=1.28.1,<2",
     "uiautomator2>=3.2.0,<4",
@@ -17,12 +28,31 @@ dependencies = [
 
 [project.optional-dependencies]
 webview = ["websocket-client>=1.8,<2"]
-dev = ["pytest>=8,<10", "ruff>=0.12,<1", "build>=1,<2"]
+dev = [
+    "pytest>=8,<10",
+    "jsonschema>=4,<5",
+    "ruff>=0.12,<1",
+    "build>=1,<2",
+]
 
 [project.scripts]
 android-root-mcp = "src.server:main"
 
+[project.urls]
+Homepage = "https://github.com/ldxm666/android-root-mcp"
+Repository = "https://github.com/ldxm666/android-root-mcp"
+Issues = "https://github.com/ldxm666/android-root-mcp/issues"
+Changelog = "https://github.com/ldxm666/android-root-mcp/blob/main/CHANGELOG.md"
+
 [tool.setuptools]
+# The top-level package is published as "src" because modules import each other
+# by that absolute name (src/server.py does `from src.advanced_controller import
+# ...`). Renaming the distribution package to something like "android_root_mcp"
+# requires renaming the src/ directory AND every internal absolute import in one
+# coordinated change; mapping it to any other name today breaks imports at run
+# time. So `pip install .` installs a top-level "src" package, which can collide
+# with other distributions doing the same. Tracked as packaging cleanup, not a
+# functional defect.
 packages = ["src"]
 
 [tool.pytest.ini_options]

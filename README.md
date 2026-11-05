@@ -152,16 +152,30 @@ If you skip this step the server still works — every gesture falls back to uia
 {
   "mcpServers": {
     "android-root": {
-      "command": "python",
-      "args": ["D:/Tools/android-root-mcp/src/server.py"],
-      "env": {
-        "ADB_PATH": "D:/Tools/platform-tools/adb.exe",
-        "ANDROID_MCP_STATE_DIR": "D:/Tools/android-root-mcp/state"
-      }
+      "command": "android-root-mcp",
+      "args": []
     }
   }
 }
 ```
+
+`pip install -e .` puts that console script on your `PATH`. If your client cannot launch a
+console script, point it at your checkout instead:
+
+```json
+{
+  "mcpServers": {
+    "android-root": {
+      "command": "python",
+      "args": ["/absolute/path/to/your/checkout/src/server.py"]
+    }
+  }
+}
+```
+
+Two environment variables are optional and only needed when the defaults do not fit:
+`ADB_PATH` (when `adb` is not on `PATH`) and `ANDROID_MCP_STATE_DIR` (defaults to
+`~/.android-root-mcp`).
 
 ### First three calls
 
