@@ -1,0 +1,10 @@
+{
+  "commands": [
+    {"label": "root", "command": "id"},
+    {"label": "screen", "command": "wm size; wm density"},
+    {"label": "battery", "command": "dumpsys battery"}
+  ],
+  "root": true,
+  "stop_on_error": true,
+  "timeout": 20
+}

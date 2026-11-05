@@ -1,0 +1,12 @@
+include README.md CHANGELOG.md install.ps1 requirements.txt ruff.toml
+recursive-include docs *.md *.json
+recursive-include examples *.json
+recursive-include plugin *.json *.md
+recursive-include scripts *.py
+recursive-include tests *.py
+global-exclude *.py[cod] *.log
+prune .venv
+prune .cache
+prune .artifacts
+prune .test-state
+prune state

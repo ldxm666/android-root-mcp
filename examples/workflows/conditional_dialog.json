@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "action": "if",
+      "condition": {"kind": "exists", "selector": {"resource_id": "com.example.app:id/test_dialog_ok"}},
+      "steps": [
+        {"action": "tap", "selector": {"resource_id": "com.example.app:id/test_dialog_ok"}}
+      ],
+      "else_steps": [
+        {"action": "assert", "condition": {"kind": "exists", "selector": {"resource_id": "com.example.app:id/home"}}}
+      ]
+    },
+    {
+      "action": "wait",
+      "condition": {"kind": "exists", "selector": {"resource_id": "com.example.app:id/home"}},
+      "timeout": 8
+    }
+  ],
+  "timeout": 30,
+  "return_ui": true
+}

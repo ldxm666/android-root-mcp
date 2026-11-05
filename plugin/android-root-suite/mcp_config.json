@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "android-root-mcp": {
+      "command": "D:\\pojie\\android-root-mcp\\.venv\\Scripts\\python.exe",
+      "args": ["D:\\pojie\\android-root-mcp\\src\\server.py"],
+      "env": {
+        "PYTHONIOENCODING": "utf-8",
+        "PYTHONUNBUFFERED": "1",
+        "ADB_PATH": "D:\\Tools\\platform-tools\\adb.exe",
+        "ANDROID_MCP_STATE_DIR": "D:\\pojie\\android-root-mcp\\state"
+      }
+    }
+  }
+}

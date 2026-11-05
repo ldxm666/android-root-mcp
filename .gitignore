@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.test-state/
+.artifacts/
+state/
+build/
+dist/
+*.egg-info/
+*.log
+mcp_config.local.json
+
+# build output / compiled daemons (build from native/ instead)
+*.jar
+*.dex
+*.class
+
+# local benchmarking scratch
+_bench/

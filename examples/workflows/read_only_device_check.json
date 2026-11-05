@@ -1,0 +1,9 @@
+{
+  "steps": [
+    {"action": "shell", "command": "getprop ro.product.model; getprop ro.build.version.release"},
+    {"action": "shell", "command": "id", "root": true},
+    {"action": "assert", "condition": {"kind": "shell", "root": true, "command": "id -u", "contains": "0"}}
+  ],
+  "timeout": 30,
+  "return_ui": false
+}

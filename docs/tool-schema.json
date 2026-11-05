@@ -1,0 +1,5182 @@
+{
+  "server": "android-root-mcp",
+  "version": "2.0.0",
+  "tool_count": 53,
+  "tools": [
+    {
+      "name": "get_device_status",
+      "description": "\n获取当前连接的 Android 设备状态：设备型号、Android/SDK 版本、实际 Root UID、\n当前前台包名与 Activity、屏幕分辨率及 UIAutomator2 可提供的亮屏状态。\n",
+      "inputSchema": {
+        "properties": {},
+        "title": "get_device_statusArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "get_device_statusOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "get_ui_tree",
+      "description": "\n【核心感知工具 - 替代慢速截图】通过高速 RPC 提取当前屏幕的语义化 UI 控件树。\n返回每个元素的 `[#index]` 编号、类名、文本 (`text`)、描述 (`desc`)、`id`、中心坐标与可交互标志 (`flags`)。\n后续可直接调用 `tap_element(index=N)` 或 `tap_element(text=\"...\")` 精准操作！\n",
+      "inputSchema": {
+        "properties": {
+          "only_interactive": {
+            "default": true,
+            "description": "是否只返回有文本或可交互（可点击/可输入/可滚动）的控件。默认 True 过滤无意义布局容器",
+            "title": "Only Interactive",
+            "type": "boolean"
+          },
+          "keyword": {
+            "default": "",
+            "description": "可选过滤关键词（匹配 text、desc、resource-id 或类名），留空返回全部",
+            "title": "Keyword",
+            "type": "string"
+          },
+          "max_elements": {
+            "default": 100,
+            "description": "最多返回的元素数量，默认 100",
+            "title": "Max Elements",
+            "type": "integer"
+          }
+        },
+        "title": "get_ui_treeArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "get_ui_treeOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "inspect_view_hierarchy",
+      "description": "\n【Android 开发 & LSPosed 逆向专用】通过 `dumpsys activity top` 提取 ROM 暴露的原生 Android View 层级树。\n具体耗时和可用信息取决于设备；相比 `get_ui_tree`，它可能额外提供：\n1. 真实的混淆/自定义 View 类名（如 `com.baidu.BaiduMap...`）\n2. 16 进制资源 ID 锚点（如 `hex=0x7f0a03fc id=app:id/search_box`）\n3. 被隐藏的 `GONE [G]` / `INVISIBLE [I]` 视图节点！\n",
+      "inputSchema": {
+        "properties": {
+          "keyword": {
+            "default": "",
+            "description": "可选过滤关键词（如自定义 View 类名、0x7f 资源号、id 名称），留空返回顶层起全部视图",
+            "title": "Keyword",
+            "type": "string"
+          },
+          "visibility_filter": {
+            "default": "ALL",
+            "description": "可见性过滤：'ALL'（全部，含 GONE/INVISIBLE 隐藏广告锚点）、'VISIBLE'（仅可见）、'GONE'（仅隐藏）",
+            "title": "Visibility Filter",
+            "type": "string"
+          },
+          "max_lines": {
+            "default": 180,
+            "description": "最大返回视图行数，默认 180",
+            "title": "Max Lines",
+            "type": "integer"
+          }
+        },
+        "title": "inspect_view_hierarchyArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "inspect_view_hierarchyOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "screenshot_annotated",
+      "description": "\n【视觉兜底与界面审查工具】获取手机屏幕截图。安全图层/DRM 等限制仍可能导致空白或拒绝。\n默认开启 Set-of-Mark (`annotate_elements=True`)，在图上直接标出 `[#0]`, `[#1]` 红框编号，\n看图后无需猜像素坐标，直接调用 `tap_element(index=编号)` 即可！\n注意：日常操作请优先使用 `get_ui_tree`，仅在 Canvas/地图渲染/游戏或视觉验证时调用本工具。\n",
+      "inputSchema": {
+        "properties": {
+          "annotate_elements": {
+            "default": true,
+            "description": "是否在截图上自动绘制可点击元素的红色边框与 [#index] 编号（Set-of-Mark）。默认 True",
+            "title": "Annotate Elements",
+            "type": "boolean"
+          },
+          "max_width": {
+            "default": 720,
+            "description": "图片最大宽度（等比缩放以加速传输），默认 720",
+            "title": "Max Width",
+            "type": "integer"
+          },
+          "save_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选：将截图保存到本地磁盘的绝对路径",
+            "title": "Save Path"
+          }
+        },
+        "title": "screenshot_annotatedArguments",
+        "type": "object"
+      }
+    },
+    {
+      "name": "tap_element",
+      "description": "\n智能语义点击工具。支持按 `#index`、`text`、`text_contains`、`resource_id`、`description` 或 `(x, y)` 点击。\n默认在点击完成后自动返回新界面的 `post_ui` 控件树，实现单回合感知闭环！\n",
+      "inputSchema": {
+        "properties": {
+          "index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "来自 get_ui_tree 或标注截图的元素编号（如 0, 1, 2）",
+            "title": "Index"
+          },
+          "text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "精确匹配元素文本（如 '设置'、'确定'）",
+            "title": "Text"
+          },
+          "text_contains": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "模糊包含匹配元素文本",
+            "title": "Text Contains"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "匹配元素的 resource-id 或短 id（如 'search_box' 或 'com.xxx:id/btn'）",
+            "title": "Resource Id"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "匹配元素的 content-desc 无障碍描述",
+            "title": "Description"
+          },
+          "x": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "兜底直接点击的横坐标 X",
+            "title": "X"
+          },
+          "y": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "兜底直接点击的纵坐标 Y",
+            "title": "Y"
+          },
+          "long_click": {
+            "default": false,
+            "description": "是否长按，默认 False",
+            "title": "Long Click",
+            "type": "boolean"
+          },
+          "wait_timeout": {
+            "default": 3.0,
+            "description": "若按文本/ID查找，最多等待元素出现的秒数，默认 3.0 秒",
+            "title": "Wait Timeout",
+            "type": "number"
+          },
+          "wait_after_ms": {
+            "default": 0,
+            "description": "点击后等待界面响应的毫秒数，默认 0ms；需要等待请用条件",
+            "title": "Wait After Ms",
+            "type": "integer"
+          },
+          "return_ui_after": {
+            "default": true,
+            "description": "点击后是否自动抓取并返回新界面的 UI 控件树（省去下一步手动调用 get_ui_tree），默认 True",
+            "title": "Return Ui After",
+            "type": "boolean"
+          }
+        },
+        "title": "tap_elementArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "tap_elementOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "input_text",
+      "description": "\n极速中文/Unicode 文本输入工具。\n可一步完成『聚焦输入框 -> 清空旧内容 -> 注入中文字符串 -> 按回车提交 -> 返回新界面 UI 树』，并自动保护系统原输入法不被篡改。\n",
+      "inputSchema": {
+        "properties": {
+          "text": {
+            "description": "要输入的文本；UIAutomator2 通道支持中文和 Emoji，不可用时明确返回失败",
+            "title": "Text",
+            "type": "string"
+          },
+          "index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选：输入前先点击聚焦的输入框元素编号 #index",
+            "title": "Index"
+          },
+          "resource_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选：输入前先点击聚焦的输入框 resource-id",
+            "title": "Resource Id"
+          },
+          "hint_or_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选：输入前先点击聚焦的输入框提示词或文本",
+            "title": "Hint Or Text"
+          },
+          "clear_first": {
+            "default": true,
+            "description": "输入前是否清空原有内容，默认 True",
+            "title": "Clear First",
+            "type": "boolean"
+          },
+          "press_enter": {
+            "default": false,
+            "description": "输入完成后是否自动按下回车/搜索键，默认 False",
+            "title": "Press Enter",
+            "type": "boolean"
+          },
+          "return_ui_after": {
+            "default": true,
+            "description": "输入后是否自动返回最新 UI 控件树，默认 True",
+            "title": "Return Ui After",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "input_textArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "input_textOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "swipe_screen",
+      "description": "\n智能滑动与滚动查找工具。\n支持四向滑动、自定义坐标拖拽，或设置 `scroll_to_text=\"目标文字\"` 让工具自动滚屏寻找目标！\n",
+      "inputSchema": {
+        "properties": {
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "up",
+            "description": "滑动方向：'up'（手指上滑浏览下方内容）、'down'、'left'、'right'",
+            "title": "Direction"
+          },
+          "scale": {
+            "default": 0.6,
+            "description": "滑动幅度比例 (0.2 ~ 0.9)，默认 0.6",
+            "title": "Scale",
+            "type": "number"
+          },
+          "scroll_to_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选：自动连续滚动屏幕直到出现包含该文本的元素为止！",
+            "title": "Scroll To Text"
+          },
+          "x1": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "自定义起点 X",
+            "title": "X1"
+          },
+          "y1": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "自定义起点 Y",
+            "title": "Y1"
+          },
+          "x2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "自定义终点 X",
+            "title": "X2"
+          },
+          "y2": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "自定义终点 Y",
+            "title": "Y2"
+          },
+          "duration_ms": {
+            "default": 350,
+            "description": "滑动耗时毫秒数，默认 350",
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "return_ui_after": {
+            "default": true,
+            "description": "滑动后是否自动返回最新 UI 控件树，默认 True",
+            "title": "Return Ui After",
+            "type": "boolean"
+          }
+        },
+        "title": "swipe_screenArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "swipe_screenOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "press_key",
+      "description": "发送系统物理/虚拟按键（返回、主页、多任务、回车、电源唤醒等），并自动返回最新界面结构。",
+      "inputSchema": {
+        "properties": {
+          "key": {
+            "default": "BACK",
+            "description": "按键名称或代码：'BACK'、'HOME'、'APP_SWITCH'、'ENTER'、'DEL'、'VOLUME_UP'、'VOLUME_DOWN'、'POWER'、'WAKEUP'、'SLEEP'",
+            "title": "Key",
+            "type": "string"
+          },
+          "wait_after_ms": {
+            "default": 0,
+            "description": "按键后等待毫秒数，默认 0",
+            "title": "Wait After Ms",
+            "type": "integer"
+          },
+          "return_ui_after": {
+            "default": true,
+            "description": "是否自动返回按键后的最新 UI 控件树，默认 True",
+            "title": "Return Ui After",
+            "type": "boolean"
+          }
+        },
+        "title": "press_keyArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "press_keyOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "batch_ui_actions",
+      "description": "\n【王牌去人机感工具】单次调用连续执行多步手机操作流水线！\n当能够预判接下来的 2~6 步操作时（例如：启动应用 -> 等待首页 -> 点击搜索框 -> 输入关键词 -> 按回车），\n必须使用本工具一次性下发，彻底告别『点一下停几秒等下一轮』的卡顿体验！\n若中途某一步失败，会自动中断并返回当前停留页面的 UI 树供纠错。\n",
+      "inputSchema": {
+        "properties": {
+          "steps": {
+            "description": "要连续执行的动作数组。支持动作类型：\n1. {'action': 'launch', 'package': 'com.xxx', 'activity': '可选'}\n2. {'action': 'wait_for', 'text': '搜索', 'timeout': 5}\n3. {'action': 'tap', 'text': '...', 'text_contains': '...', 'id': '...', 'index': 0, 'x': 100, 'y': 200}\n4. {'action': 'input', 'text': '要输入的中文', 'hint': '搜索框提示词', 'clear': True, 'enter': True}\n5. {'action': 'swipe', 'direction': 'up', 'scroll_to_text': '可选滚动查找文字'}\n6. {'action': 'key', 'key': 'BACK'}\n7. {'action': 'sleep', 'ms': 500}\n8. {'action': 'root_cmd', 'cmd': '...'}",
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "return_ui_after": {
+            "default": true,
+            "description": "批量执行完毕后是否返回最终 UI 控件树，默认 True",
+            "title": "Return Ui After",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "title": "batch_ui_actionsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "batch_ui_actionsOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "root_shell",
+      "description": "\n【Root 上帝模式直通车】通过 `su -c` 在手机上执行任意 Root 特权 Shell 命令。\n可执行诸如修改系统属性 (`resetprop`/`setprop`)、查看内核/挂载信息、操作 `/data/` 私有目录、管理防火墙等任意底层指令。\n",
+      "inputSchema": {
+        "properties": {
+          "command": {
+            "description": "要在手机上以 uid=0(root) 执行的 Linux / Android Shell 命令",
+            "title": "Command",
+            "type": "string"
+          },
+          "timeout": {
+            "default": 20.0,
+            "description": "命令超时秒数，默认 20.0",
+            "title": "Timeout",
+            "type": "number"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "title": "root_shellArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "root_shellOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "start_activity_root",
+      "description": "\n【Root 页面直达工具】利用 Root 权限强行穿透拉起任意内部私有 Activity (`exported=false`) 或 DeepLink Scheme，\n直接一步跨越繁琐的开屏广告与多级菜单跳转！\n",
+      "inputSchema": {
+        "properties": {
+          "package": {
+            "default": "",
+            "description": "应用包名（如 'com.baidu.BaiduMap' 或 'com.android.settings'）",
+            "title": "Package",
+            "type": "string"
+          },
+          "activity": {
+            "default": "",
+            "description": "目标 Activity 名称（支持未导出的私有 Activity，如 '.map.main.MainActivity'），留空则启动应用默认主页",
+            "title": "Activity",
+            "type": "string"
+          },
+          "data_uri": {
+            "default": "",
+            "description": "可选：DeepLink URI / Scheme（如 'baidumap://map/direction?...' 或 'https://...'）",
+            "title": "Data Uri",
+            "type": "string"
+          },
+          "action": {
+            "default": "",
+            "description": "可选：Intent Action（如 'android.intent.action.VIEW'）",
+            "title": "Action",
+            "type": "string"
+          },
+          "extras": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "可选：Intent Extras 键值对（自动识别 str/int/bool 转换为 --es/--ei/--ez）",
+            "title": "Extras"
+          },
+          "force_stop_first": {
+            "default": false,
+            "description": "启动前是否先强行停止该应用以确保冷启动，默认 False",
+            "title": "Force Stop First",
+            "type": "boolean"
+          },
+          "return_ui_after": {
+            "default": true,
+            "description": "启动后是否自动等待并返回界面 UI 树，默认 True",
+            "title": "Return Ui After",
+            "type": "boolean"
+          }
+        },
+        "title": "start_activity_rootArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "start_activity_rootOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "manage_app",
+      "description": "应用生命周期与权限管理工具（信息、停止、重启、清空数据、逐项尝试授予运行时权限）。",
+      "inputSchema": {
+        "properties": {
+          "package": {
+            "description": "目标应用包名",
+            "title": "Package",
+            "type": "string"
+          },
+          "action": {
+            "default": "info",
+            "description": "操作类型：\n- 'info': 查看版本名、versionCode、APK路径、UID、进程PID、签名与组件信息\n- 'stop': 强行停止应用 (am force-stop)\n- 'restart': 强杀并重新冷启动应用\n- 'clear_data': 清空应用数据与缓存 (pm clear)\n- 'grant_all_permissions': 尝试授予已声明的危险运行时权限，逐项返回结果；特殊权限需 app_permissions 明确设置",
+            "title": "Action",
+            "type": "string"
+          }
+        },
+        "required": [
+          "package"
+        ],
+        "title": "manage_appArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "manage_appOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "inspect_app_data",
+      "description": "\n【零界面数据穿透工具】直接通过 Root 读取或查询 `/data/data/<package>/` 下的 SharedPreferences 配置与 SQLite 数据库！\n无需打开应用界面，直接核查开关状态、缓存数据与内部表记录。\n",
+      "inputSchema": {
+        "properties": {
+          "package": {
+            "description": "目标应用包名（如 'com.baidu.BaiduMap'）",
+            "title": "Package",
+            "type": "string"
+          },
+          "mode": {
+            "default": "list",
+            "description": "操作模式：\n- 'list': 列出应用私有目录下的 shared_prefs、databases 和 files\n- 'read_prefs': 读取 SharedPreferences XML 配置内容\n- 'sql_query': 对应用私有 SQLite 数据库执行 SQL 查询",
+            "title": "Mode",
+            "type": "string"
+          },
+          "target_file": {
+            "default": "",
+            "description": "当 mode 为 'read_prefs' 时填 XML 文件名（留空读全部）；当 mode 为 'sql_query' 时填数据库文件名（如 'data.db'）",
+            "title": "Target File",
+            "type": "string"
+          },
+          "sql_query": {
+            "default": "",
+            "description": "当 mode='sql_query' 时执行的 SQL 语句（留空默认查询所有表名与表结构）",
+            "title": "Sql Query",
+            "type": "string"
+          },
+          "pref_key": {
+            "default": "",
+            "description": "当 mode='read_prefs' 时可选过滤的配置键名关键词",
+            "title": "Pref Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "package"
+        ],
+        "title": "inspect_app_dataArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "inspect_app_dataOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "query_system_provider",
+      "description": "\n【后台零界面取证工具】无需下拉通知栏或打开短信 App，直接通过 Root 提取通知栏消息、短信验证码或读写系统剪贴板。\n",
+      "inputSchema": {
+        "properties": {
+          "source": {
+            "default": "notifications",
+            "description": "数据源类型：\n- 'notifications': 抓取当前系统通知栏所有未读通知详情（含验证码、推送标题与正文）\n- 'sms': 直接读取短信收件箱最新消息\n- 'clipboard_get': 读取当前手机剪贴板文本\n- 'clipboard_set': 写入文本到手机剪贴板\n- 'custom_uri': 查询自定义 ContentProvider URI",
+            "title": "Source",
+            "type": "string"
+          },
+          "value_or_uri": {
+            "default": "",
+            "description": "当 source='clipboard_set' 时为要写入的文本；当 source='custom_uri' 时为 content://... 路径",
+            "title": "Value Or Uri",
+            "type": "string"
+          }
+        },
+        "title": "query_system_providerArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "query_system_providerOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "read_logcat_smart",
+      "description": "\n【智能 Logcat 诊断工具】支持按包名自动绑定进程 PID、一键提取闪退堆栈 (`crash_only=True`)、按 Tag 或关键词精准过滤日志。\n",
+      "inputSchema": {
+        "properties": {
+          "package": {
+            "default": "",
+            "description": "按应用包名自动解析 PID 过滤日志（如 'com.baidu.BaiduMap'）",
+            "title": "Package",
+            "type": "string"
+          },
+          "tag": {
+            "default": "",
+            "description": "按 Log Tag 过滤（如 'MapAdKiller'、'AndroidRuntime'）",
+            "title": "Tag",
+            "type": "string"
+          },
+          "grep_keyword": {
+            "default": "",
+            "description": "按正文中包含的关键词过滤",
+            "title": "Grep Keyword",
+            "type": "string"
+          },
+          "level": {
+            "default": "I",
+            "description": "最低日志级别：'V', 'D', 'I', 'W', 'E', 'F'，默认 'I'",
+            "title": "Level",
+            "type": "string"
+          },
+          "lines": {
+            "default": 100,
+            "description": "返回的最新日志行数，默认 100",
+            "title": "Lines",
+            "type": "integer"
+          },
+          "crash_only": {
+            "default": false,
+            "description": "是否仅读取崩溃缓冲池 (logcat -b crash)，查闪退必开！默认 False",
+            "title": "Crash Only",
+            "type": "boolean"
+          },
+          "clear_first": {
+            "default": false,
+            "description": "是否清空旧日志缓冲池 (logcat -c)，默认 False",
+            "title": "Clear First",
+            "type": "boolean"
+          }
+        },
+        "title": "read_logcat_smartArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "read_logcat_smartOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "inspect_lsposed",
+      "description": "\n【LSPosed / Xposed / KernelSU 专属调试工具】\n直接通过 Root 读取 `/data/adb/lspd/log/modules_*.log` 最新模块日志与已安装的 KernelSU/Zygisk 模块列表，\n快速验证 Hook 是否生效、是否有 StackOverflowError / ClassNotFoundException 等异常！\n",
+      "inputSchema": {
+        "properties": {
+          "keyword": {
+            "default": "",
+            "description": "可选：过滤 LSPosed 日志中的关键词（如模块名、宿主包名、Hook 标记）",
+            "title": "Keyword",
+            "type": "string"
+          },
+          "lines": {
+            "default": 100,
+            "description": "返回最新日志行数，默认 100",
+            "title": "Lines",
+            "type": "integer"
+          },
+          "include_verbose": {
+            "default": false,
+            "description": "是否读取 LSPosed 框架底层 verbose 日志，默认 False 读模块日志",
+            "title": "Include Verbose",
+            "type": "boolean"
+          }
+        },
+        "title": "inspect_lsposedArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "inspect_lsposedOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "deploy_and_verify_apk",
+      "description": "\n【Android / LSPosed 开发一键联调闭环】\n单次调用自动完成：\n1. 安装本地 APK (`adb install -r -d`)\n2. 记录日志起始时间，保留全局 Logcat 缓冲池\n3. 强杀并冷启动目标宿主应用 (`am force-stop` + 启动)\n4. 等待页面渲染与 Hook 注入\n5. 自动汇总返回：是否有 Crash 堆栈 + 目标应用 Logcat + LSPosed 模块最新日志 + 当前屏幕 UI 控件树！\n",
+      "inputSchema": {
+        "properties": {
+          "apk_path": {
+            "description": "本地电脑上编译好的 APK 绝对路径",
+            "title": "Apk Path",
+            "type": "string"
+          },
+          "target_package": {
+            "description": "安装后需要强杀并冷启动验证的目标包名（如果是调试 LSPosed 模块，填宿主包名如 'com.baidu.BaiduMap'；如果是普通 App，填自身包名）",
+            "title": "Target Package",
+            "type": "string"
+          },
+          "launch_activity": {
+            "default": "",
+            "description": "可选：指定启动的具体 Activity",
+            "title": "Launch Activity",
+            "type": "string"
+          },
+          "wait_seconds": {
+            "default": 3.5,
+            "description": "启动后等待钩子执行与页面加载的秒数，默认 3.5 秒",
+            "title": "Wait Seconds",
+            "type": "number"
+          },
+          "log_keyword": {
+            "default": "",
+            "description": "可选：过滤提取日志的关键词",
+            "title": "Log Keyword",
+            "type": "string"
+          }
+        },
+        "required": [
+          "apk_path",
+          "target_package"
+        ],
+        "title": "deploy_and_verify_apkArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "deploy_and_verify_apkOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "file_transfer_root",
+      "description": "\n【Root 级跨端文件推拉】利用 `/data/local/tmp` 中转与 Root 提权，支持直接拉取或替换 `/data/data/`、`/data/adb/` 等任意私有目录文件。\n",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "description": "'pull'（从手机任意 Root 路径拉取到电脑）或 'push'（从电脑推送到手机任意 Root 路径）",
+            "title": "Action",
+            "type": "string"
+          },
+          "device_path": {
+            "description": "手机端路径（支持 /data/data/... 或 /data/adb/... 等受保护路径）",
+            "title": "Device Path",
+            "type": "string"
+          },
+          "local_path": {
+            "description": "电脑本地绝对路径",
+            "title": "Local Path",
+            "type": "string"
+          },
+          "file_mode": {
+            "default": "644",
+            "description": "push 时赋予的目标文件权限，默认 '644'",
+            "title": "File Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "device_path",
+          "local_path"
+        ],
+        "title": "file_transfer_rootArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "file_transfer_rootOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "optimize_device_for_agent",
+      "description": "\n【设备极速模式调优】一键将手机调校为最适合 AI Agent 高速操控与调试的状态：\n1. 关闭系统窗口与过渡动画 (`animation_scale = 0`)，消除页面切换等待时间\n2. 开启连接电源时屏幕常亮 (`stay_on_while_plugged_in`)\n3. 自动唤醒屏幕并滑开锁屏层 (`wm dismiss-keyguard`)\n",
+      "inputSchema": {
+        "properties": {
+          "zero_animation": {
+            "default": true,
+            "description": "是否将系统过渡动画缩放设为 0.0；修改前保存原值，恢复用返回的 profile_id。默认 True",
+            "title": "Zero Animation",
+            "type": "boolean"
+          },
+          "stay_awake_while_plugged": {
+            "default": true,
+            "description": "是否开启 USB 连接时保持屏幕常亮不息屏，默认 True",
+            "title": "Stay Awake While Plugged",
+            "type": "boolean"
+          },
+          "wake_and_unlock": {
+            "default": true,
+            "description": "是否立即唤醒并解除锁屏遮挡，默认 True",
+            "title": "Wake And Unlock",
+            "type": "boolean"
+          }
+        },
+        "title": "optimize_device_for_agentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "properties": {
+          "result": {
+            "title": "Result",
+            "type": "string"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "title": "optimize_device_for_agentOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "tool_catalog",
+      "description": "Discover v2 capabilities and the efficient Agent operating rules (no device connection needed).",
+      "inputSchema": {
+        "properties": {},
+        "title": "tool_catalogArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "tool_catalogDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "device_connection",
+      "description": "List/select ADB devices or connect/disconnect/pair host:port. Selection clears UI indices; no arbitrary default when multiple devices are attached.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "list",
+            "title": "Action",
+            "type": "string"
+          },
+          "serial": {
+            "default": "",
+            "title": "Serial",
+            "type": "string"
+          },
+          "address": {
+            "default": "",
+            "title": "Address",
+            "type": "string"
+          },
+          "pairing_code": {
+            "default": "",
+            "title": "Pairing Code",
+            "type": "string"
+          }
+        },
+        "title": "device_connectionArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "device_connectionDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "device_doctor",
+      "description": "Probe actual Root UID, ROM/SDK, installed command/dependency capabilities. initialize_u2 starts the UIAutomator2 helper and resets a failed connection.",
+      "inputSchema": {
+        "properties": {
+          "initialize_u2": {
+            "default": false,
+            "title": "Initialize U2",
+            "type": "boolean"
+          }
+        },
+        "title": "device_doctorArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "device_doctorDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "ui_snapshot",
+      "description": "Fresh semantic UI snapshot with stable document-order indices and snapshot_id. Supply since_snapshot_id for added/removed/changed nodes; compact omits the full element array.",
+      "inputSchema": {
+        "properties": {
+          "only_interactive": {
+            "default": true,
+            "title": "Only Interactive",
+            "type": "boolean"
+          },
+          "keyword": {
+            "default": "",
+            "title": "Keyword",
+            "type": "string"
+          },
+          "max_elements": {
+            "default": 100,
+            "title": "Max Elements",
+            "type": "integer"
+          },
+          "include_xml": {
+            "default": false,
+            "title": "Include Xml",
+            "type": "boolean"
+          },
+          "since_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Since Snapshot Id"
+          },
+          "compact": {
+            "default": true,
+            "title": "Compact",
+            "type": "boolean"
+          }
+        },
+        "title": "ui_snapshotArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "ui_snapshotDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "find_elements",
+      "description": "Query UI with AND-combined text/id/class/package/state/region predicates, regex and explicit nth. Does not click; returns all matches plus snapshot_id.",
+      "inputSchema": {
+        "$defs": {
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "selector": {
+            "$ref": "#/$defs/Selector"
+          },
+          "max_results": {
+            "default": 100,
+            "title": "Max Results",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "title": "find_elementsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "find_elementsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "element_action",
+      "description": "Act on exactly one matching element: tap/long_click/double_click/set_text/append_text/clear/check/uncheck/read. Ambiguous/stale/disabled targets fail explicitly.",
+      "inputSchema": {
+        "$defs": {
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "selector": {
+            "$ref": "#/$defs/Selector"
+          },
+          "action": {
+            "default": "tap",
+            "title": "Action",
+            "type": "string"
+          },
+          "value": {
+            "default": "",
+            "title": "Value",
+            "type": "string"
+          },
+          "timeout": {
+            "default": 3,
+            "title": "Timeout",
+            "type": "number"
+          },
+          "return_ui": {
+            "default": true,
+            "title": "Return Ui",
+            "type": "boolean"
+          },
+          "duration_ms": {
+            "default": 600,
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "press_enter": {
+            "default": false,
+            "title": "Press Enter",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "selector"
+        ],
+        "title": "element_actionArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "element_actionDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "wait_for_condition",
+      "description": "Wait for exists/gone/foreground/shell-exit-and-output/stable UI. Missing UI transport never counts as 'gone'. Replaces blind sleep calls.",
+      "inputSchema": {
+        "$defs": {
+          "Condition": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "default": "exists",
+                "enum": [
+                  "exists",
+                  "gone",
+                  "foreground",
+                  "shell",
+                  "stable"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "selector": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Selector"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "activity": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Activity"
+              },
+              "command": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Command"
+              },
+              "root": {
+                "default": false,
+                "title": "Root",
+                "type": "boolean"
+              },
+              "contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Contains"
+              },
+              "exit_code": {
+                "default": 0,
+                "title": "Exit Code",
+                "type": "integer"
+              },
+              "stable_samples": {
+                "default": 2,
+                "maximum": 10,
+                "minimum": 2,
+                "title": "Stable Samples",
+                "type": "integer"
+              }
+            },
+            "title": "Condition",
+            "type": "object"
+          },
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "condition": {
+            "$ref": "#/$defs/Condition"
+          },
+          "timeout": {
+            "default": 10,
+            "title": "Timeout",
+            "type": "number"
+          },
+          "poll_interval": {
+            "default": 0.2,
+            "title": "Poll Interval",
+            "type": "number"
+          }
+        },
+        "required": [
+          "condition"
+        ],
+        "title": "wait_for_conditionArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "wait_for_conditionDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "fill_form",
+      "description": "Fill several fields (including Chinese/Emoji) and optionally submit in one tool call. Stops at the first failed field; returns final UI once.",
+      "inputSchema": {
+        "$defs": {
+          "FormField": {
+            "additionalProperties": false,
+            "properties": {
+              "selector": {
+                "$ref": "#/$defs/Selector"
+              },
+              "value": {
+                "maxLength": 100000,
+                "title": "Value",
+                "type": "string"
+              }
+            },
+            "required": [
+              "selector",
+              "value"
+            ],
+            "title": "FormField",
+            "type": "object"
+          },
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/$defs/FormField"
+            },
+            "title": "Fields",
+            "type": "array"
+          },
+          "submit": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Selector"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "return_ui": {
+            "default": true,
+            "title": "Return Ui",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "fields"
+        ],
+        "title": "fill_formArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "fill_formDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "run_workflow",
+      "description": "Execute a fully prevalidated UI/Root workflow in ONE call: launch/tap/input/key/swipe/wait/assert/shell/if/repeat/sleep/read_text. Supports per-step postconditions, on_error, bounded loops/deadline and trace. No blind retries of non-idempotent actions.",
+      "inputSchema": {
+        "$defs": {
+          "Condition": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "default": "exists",
+                "enum": [
+                  "exists",
+                  "gone",
+                  "foreground",
+                  "shell",
+                  "stable"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "selector": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Selector"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "activity": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Activity"
+              },
+              "command": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Command"
+              },
+              "root": {
+                "default": false,
+                "title": "Root",
+                "type": "boolean"
+              },
+              "contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Contains"
+              },
+              "exit_code": {
+                "default": 0,
+                "title": "Exit Code",
+                "type": "integer"
+              },
+              "stable_samples": {
+                "default": 2,
+                "maximum": 10,
+                "minimum": 2,
+                "title": "Stable Samples",
+                "type": "integer"
+              }
+            },
+            "title": "Condition",
+            "type": "object"
+          },
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          },
+          "Workflow": {
+            "additionalProperties": false,
+            "properties": {
+              "steps": {
+                "items": {
+                  "$ref": "#/$defs/WorkflowStep"
+                },
+                "maxItems": 200,
+                "minItems": 1,
+                "title": "Steps",
+                "type": "array"
+              },
+              "timeout": {
+                "default": 120,
+                "exclusiveMinimum": 0,
+                "maximum": 1800,
+                "title": "Timeout",
+                "type": "number"
+              },
+              "max_executed_steps": {
+                "default": 500,
+                "maximum": 5000,
+                "minimum": 1,
+                "title": "Max Executed Steps",
+                "type": "integer"
+              },
+              "return_ui": {
+                "default": true,
+                "title": "Return Ui",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "steps"
+            ],
+            "title": "Workflow",
+            "type": "object"
+          },
+          "WorkflowStep": {
+            "additionalProperties": false,
+            "description": "A bounded, prevalidated workflow. Unknown actions/parameters are errors.",
+            "properties": {
+              "action": {
+                "enum": [
+                  "launch",
+                  "tap",
+                  "long_click",
+                  "double_click",
+                  "input",
+                  "clear",
+                  "key",
+                  "swipe",
+                  "wait",
+                  "assert",
+                  "shell",
+                  "if",
+                  "repeat",
+                  "sleep",
+                  "read_text"
+                ],
+                "title": "Action",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "maxLength": 100,
+                "title": "Label",
+                "type": "string"
+              },
+              "selector": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Selector"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "x": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "X"
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Y"
+              },
+              "text": {
+                "default": "",
+                "maxLength": 100000,
+                "title": "Text",
+                "type": "string"
+              },
+              "clear": {
+                "default": true,
+                "title": "Clear",
+                "type": "boolean"
+              },
+              "enter": {
+                "default": false,
+                "title": "Enter",
+                "type": "boolean"
+              },
+              "key": {
+                "default": "BACK",
+                "title": "Key",
+                "type": "string"
+              },
+              "package": {
+                "default": "",
+                "title": "Package",
+                "type": "string"
+              },
+              "activity": {
+                "default": "",
+                "title": "Activity",
+                "type": "string"
+              },
+              "direction": {
+                "default": "up",
+                "enum": [
+                  "up",
+                  "down",
+                  "left",
+                  "right"
+                ],
+                "title": "Direction",
+                "type": "string"
+              },
+              "scale": {
+                "default": 0.6,
+                "exclusiveMinimum": 0,
+                "maximum": 0.9,
+                "title": "Scale",
+                "type": "number"
+              },
+              "duration_ms": {
+                "default": 300,
+                "maximum": 10000,
+                "minimum": 1,
+                "title": "Duration Ms",
+                "type": "integer"
+              },
+              "command": {
+                "default": "",
+                "maxLength": 100000,
+                "title": "Command",
+                "type": "string"
+              },
+              "root": {
+                "default": false,
+                "title": "Root",
+                "type": "boolean"
+              },
+              "condition": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Condition"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "expect": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Condition"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "timeout": {
+                "default": 5,
+                "maximum": 300,
+                "minimum": 0,
+                "title": "Timeout",
+                "type": "number"
+              },
+              "ms": {
+                "default": 0,
+                "maximum": 60000,
+                "minimum": 0,
+                "title": "Ms",
+                "type": "integer"
+              },
+              "on_error": {
+                "default": "stop",
+                "enum": [
+                  "stop",
+                  "continue"
+                ],
+                "title": "On Error",
+                "type": "string"
+              },
+              "count": {
+                "default": 1,
+                "maximum": 100,
+                "minimum": 1,
+                "title": "Count",
+                "type": "integer"
+              },
+              "steps": {
+                "items": {
+                  "$ref": "#/$defs/WorkflowStep"
+                },
+                "maxItems": 200,
+                "title": "Steps",
+                "type": "array"
+              },
+              "else_steps": {
+                "items": {
+                  "$ref": "#/$defs/WorkflowStep"
+                },
+                "maxItems": 200,
+                "title": "Else Steps",
+                "type": "array"
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "title": "WorkflowStep",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "workflow": {
+            "$ref": "#/$defs/Workflow"
+          }
+        },
+        "required": [
+          "workflow"
+        ],
+        "title": "run_workflowArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "run_workflowDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "workflow_control",
+      "description": "Inspect or cooperatively cancel an active workflow from another request. Cancellation stops subsequent steps; in-flight device/RPC calls finish or time out first.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "status",
+            "title": "Action",
+            "type": "string"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Run Id"
+          }
+        },
+        "title": "workflow_controlArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "workflow_controlDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "saved_workflow",
+      "description": "Persist/reuse named workflows: list/save/load/run/delete. Save validates all steps before atomic storage; works across MCP restarts.",
+      "inputSchema": {
+        "$defs": {
+          "Condition": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "default": "exists",
+                "enum": [
+                  "exists",
+                  "gone",
+                  "foreground",
+                  "shell",
+                  "stable"
+                ],
+                "title": "Kind",
+                "type": "string"
+              },
+              "selector": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Selector"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "activity": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Activity"
+              },
+              "command": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Command"
+              },
+              "root": {
+                "default": false,
+                "title": "Root",
+                "type": "boolean"
+              },
+              "contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Contains"
+              },
+              "exit_code": {
+                "default": 0,
+                "title": "Exit Code",
+                "type": "integer"
+              },
+              "stable_samples": {
+                "default": 2,
+                "maximum": 10,
+                "minimum": 2,
+                "title": "Stable Samples",
+                "type": "integer"
+              }
+            },
+            "title": "Condition",
+            "type": "object"
+          },
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          },
+          "Workflow": {
+            "additionalProperties": false,
+            "properties": {
+              "steps": {
+                "items": {
+                  "$ref": "#/$defs/WorkflowStep"
+                },
+                "maxItems": 200,
+                "minItems": 1,
+                "title": "Steps",
+                "type": "array"
+              },
+              "timeout": {
+                "default": 120,
+                "exclusiveMinimum": 0,
+                "maximum": 1800,
+                "title": "Timeout",
+                "type": "number"
+              },
+              "max_executed_steps": {
+                "default": 500,
+                "maximum": 5000,
+                "minimum": 1,
+                "title": "Max Executed Steps",
+                "type": "integer"
+              },
+              "return_ui": {
+                "default": true,
+                "title": "Return Ui",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "steps"
+            ],
+            "title": "Workflow",
+            "type": "object"
+          },
+          "WorkflowStep": {
+            "additionalProperties": false,
+            "description": "A bounded, prevalidated workflow. Unknown actions/parameters are errors.",
+            "properties": {
+              "action": {
+                "enum": [
+                  "launch",
+                  "tap",
+                  "long_click",
+                  "double_click",
+                  "input",
+                  "clear",
+                  "key",
+                  "swipe",
+                  "wait",
+                  "assert",
+                  "shell",
+                  "if",
+                  "repeat",
+                  "sleep",
+                  "read_text"
+                ],
+                "title": "Action",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "maxLength": 100,
+                "title": "Label",
+                "type": "string"
+              },
+              "selector": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Selector"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "x": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "X"
+              },
+              "y": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Y"
+              },
+              "text": {
+                "default": "",
+                "maxLength": 100000,
+                "title": "Text",
+                "type": "string"
+              },
+              "clear": {
+                "default": true,
+                "title": "Clear",
+                "type": "boolean"
+              },
+              "enter": {
+                "default": false,
+                "title": "Enter",
+                "type": "boolean"
+              },
+              "key": {
+                "default": "BACK",
+                "title": "Key",
+                "type": "string"
+              },
+              "package": {
+                "default": "",
+                "title": "Package",
+                "type": "string"
+              },
+              "activity": {
+                "default": "",
+                "title": "Activity",
+                "type": "string"
+              },
+              "direction": {
+                "default": "up",
+                "enum": [
+                  "up",
+                  "down",
+                  "left",
+                  "right"
+                ],
+                "title": "Direction",
+                "type": "string"
+              },
+              "scale": {
+                "default": 0.6,
+                "exclusiveMinimum": 0,
+                "maximum": 0.9,
+                "title": "Scale",
+                "type": "number"
+              },
+              "duration_ms": {
+                "default": 300,
+                "maximum": 10000,
+                "minimum": 1,
+                "title": "Duration Ms",
+                "type": "integer"
+              },
+              "command": {
+                "default": "",
+                "maxLength": 100000,
+                "title": "Command",
+                "type": "string"
+              },
+              "root": {
+                "default": false,
+                "title": "Root",
+                "type": "boolean"
+              },
+              "condition": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Condition"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "expect": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/Condition"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "timeout": {
+                "default": 5,
+                "maximum": 300,
+                "minimum": 0,
+                "title": "Timeout",
+                "type": "number"
+              },
+              "ms": {
+                "default": 0,
+                "maximum": 60000,
+                "minimum": 0,
+                "title": "Ms",
+                "type": "integer"
+              },
+              "on_error": {
+                "default": "stop",
+                "enum": [
+                  "stop",
+                  "continue"
+                ],
+                "title": "On Error",
+                "type": "string"
+              },
+              "count": {
+                "default": 1,
+                "maximum": 100,
+                "minimum": 1,
+                "title": "Count",
+                "type": "integer"
+              },
+              "steps": {
+                "items": {
+                  "$ref": "#/$defs/WorkflowStep"
+                },
+                "maxItems": 200,
+                "title": "Steps",
+                "type": "array"
+              },
+              "else_steps": {
+                "items": {
+                  "$ref": "#/$defs/WorkflowStep"
+                },
+                "maxItems": 200,
+                "title": "Else Steps",
+                "type": "array"
+              }
+            },
+            "required": [
+              "action"
+            ],
+            "title": "WorkflowStep",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "action": {
+            "default": "list",
+            "title": "Action",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "workflow": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Workflow"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "saved_workflowArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "saved_workflowDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "shell_execute",
+      "description": "Run an arbitrary Android shell command, optionally su uid=0. Returns real exit_code/stdout/stderr/timeout/truncation. Device-side timeout when supported; never invokes a host shell.",
+      "inputSchema": {
+        "properties": {
+          "command": {
+            "title": "Command",
+            "type": "string"
+          },
+          "root": {
+            "default": false,
+            "title": "Root",
+            "type": "boolean"
+          },
+          "timeout": {
+            "default": 20,
+            "title": "Timeout",
+            "type": "number"
+          },
+          "max_output_bytes": {
+            "default": 65536,
+            "title": "Max Output Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "title": "shell_executeArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "shell_executeDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "shell_batch",
+      "description": "Run 1..200 CLI commands in ONE ADB process/Root session. Per-command exit codes and output, optional fail-fast; avoids one subprocess/tool call per command.",
+      "inputSchema": {
+        "$defs": {
+          "ShellCommand": {
+            "additionalProperties": false,
+            "properties": {
+              "command": {
+                "maxLength": 100000,
+                "minLength": 1,
+                "title": "Command",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "maxLength": 100,
+                "title": "Label",
+                "type": "string"
+              }
+            },
+            "required": [
+              "command"
+            ],
+            "title": "ShellCommand",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "commands": {
+            "items": {
+              "$ref": "#/$defs/ShellCommand"
+            },
+            "title": "Commands",
+            "type": "array"
+          },
+          "root": {
+            "default": false,
+            "title": "Root",
+            "type": "boolean"
+          },
+          "stop_on_error": {
+            "default": true,
+            "title": "Stop On Error",
+            "type": "boolean"
+          },
+          "timeout": {
+            "default": 30,
+            "title": "Timeout",
+            "type": "number"
+          },
+          "max_output_bytes": {
+            "default": 1048576,
+            "title": "Max Output Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "commands"
+        ],
+        "title": "shell_batchArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "shell_batchDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "adb_command",
+      "description": "Raw selected-device ADB command escape hatch (e.g. bugreport, jdwp, shell am instrument). Arguments passed directly to native adb, no host shell. Prefer typed tools for timeouts and validation.",
+      "inputSchema": {
+        "properties": {
+          "args": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Args",
+            "type": "array"
+          },
+          "timeout": {
+            "default": 30,
+            "title": "Timeout",
+            "type": "number"
+          },
+          "max_output_bytes": {
+            "default": 65536,
+            "title": "Max Output Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "args"
+        ],
+        "title": "adb_commandArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "adb_commandDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "device_job",
+      "description": "Background device processes: list/start/status/output/cancel/cleanup. Use for logcat, instrumentation, perfetto, tcpdump if installed. Persistent handles, bounded stdout/stderr, incremental byte offsets and PID-reuse checks. timeout=0 explicitly allows indefinite work.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "list",
+            "title": "Action",
+            "type": "string"
+          },
+          "job_id": {
+            "default": "",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "command": {
+            "default": "",
+            "title": "Command",
+            "type": "string"
+          },
+          "root": {
+            "default": false,
+            "title": "Root",
+            "type": "boolean"
+          },
+          "timeout": {
+            "default": 300,
+            "title": "Timeout",
+            "type": "number"
+          },
+          "max_output_mb": {
+            "default": 16,
+            "title": "Max Output Mb",
+            "type": "integer"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "stream": {
+            "default": "stdout",
+            "title": "Stream",
+            "type": "string"
+          },
+          "offset": {
+            "default": 0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "limit": {
+            "default": 32768,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "encoding": {
+            "default": "utf-8",
+            "title": "Encoding",
+            "type": "string"
+          }
+        },
+        "title": "device_jobArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "device_jobDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "device_files",
+      "description": "Root file manager: list/stat/read/write/append/hash/mkdir/chmod/copy/move/delete. Text or base64, atomic replacement, preserve existing ownership/mode, backup by default, optional compare-and-swap SHA256. Use transfer for large files/trees.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "destination": {
+            "default": "",
+            "title": "Destination",
+            "type": "string"
+          },
+          "text": {
+            "default": "",
+            "title": "Text",
+            "type": "string"
+          },
+          "encoding": {
+            "default": "utf-8",
+            "title": "Encoding",
+            "type": "string"
+          },
+          "mode": {
+            "default": "600",
+            "title": "Mode",
+            "type": "string"
+          },
+          "root": {
+            "default": true,
+            "title": "Root",
+            "type": "boolean"
+          },
+          "recursive": {
+            "default": false,
+            "title": "Recursive",
+            "type": "boolean"
+          },
+          "expected_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expected Sha256"
+          },
+          "max_bytes": {
+            "default": 1048576,
+            "title": "Max Bytes",
+            "type": "integer"
+          },
+          "backup": {
+            "default": true,
+            "title": "Backup",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "action",
+          "path"
+        ],
+        "title": "device_filesArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "device_filesDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "app_action",
+      "description": "List/info/paths/launch/stop/restart/clear/enable/disable/uninstall apps; install/install_multiple local APKs (base+splits), explicit downgrade/test/permission switches. clear/uninstall remove user data.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "list",
+            "title": "Action",
+            "type": "string"
+          },
+          "package": {
+            "default": "",
+            "title": "Package",
+            "type": "string"
+          },
+          "apk_paths": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Apk Paths"
+          },
+          "activity": {
+            "default": "",
+            "title": "Activity",
+            "type": "string"
+          },
+          "include_system": {
+            "default": false,
+            "title": "Include System",
+            "type": "boolean"
+          },
+          "user_id": {
+            "default": 0,
+            "title": "User Id",
+            "type": "integer"
+          },
+          "grant_permissions": {
+            "default": false,
+            "title": "Grant Permissions",
+            "type": "boolean"
+          },
+          "allow_downgrade": {
+            "default": false,
+            "title": "Allow Downgrade",
+            "type": "boolean"
+          },
+          "allow_test": {
+            "default": false,
+            "title": "Allow Test",
+            "type": "boolean"
+          }
+        },
+        "title": "app_actionArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "app_actionDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "app_permissions",
+      "description": "Inspect/grant/revoke permissions or set a named appop. grant_runtime_all intersects declared permissions with device dangerous-runtime list and reports failures individually; does not silently enable all special privileges.",
+      "inputSchema": {
+        "properties": {
+          "package": {
+            "title": "Package",
+            "type": "string"
+          },
+          "action": {
+            "default": "list",
+            "title": "Action",
+            "type": "string"
+          },
+          "permission": {
+            "default": "",
+            "title": "Permission",
+            "type": "string"
+          },
+          "mode": {
+            "default": "allow",
+            "title": "Mode",
+            "type": "string"
+          },
+          "user_id": {
+            "default": 0,
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "package"
+        ],
+        "title": "app_permissionsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "app_permissionsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "export_apks",
+      "description": "Export an installed app's base APK and ALL split APKs to a host directory for development/testing.",
+      "inputSchema": {
+        "properties": {
+          "package": {
+            "title": "Package",
+            "type": "string"
+          },
+          "output_dir": {
+            "title": "Output Dir",
+            "type": "string"
+          }
+        },
+        "required": [
+          "package",
+          "output_dir"
+        ],
+        "title": "export_apksArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "export_apksDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "send_intent",
+      "description": "Root/nonroot typed Intent: activity/broadcast/service/foreground_service/stop_service, internal components, DeepLinks, MIME/categories/flags, bool/int/long/float/string/null extras. Reports am errors even if exit code is zero.",
+      "inputSchema": {
+        "properties": {
+          "kind": {
+            "default": "activity",
+            "title": "Kind",
+            "type": "string"
+          },
+          "package": {
+            "default": "",
+            "title": "Package",
+            "type": "string"
+          },
+          "activity": {
+            "default": "",
+            "title": "Activity",
+            "type": "string"
+          },
+          "action": {
+            "default": "",
+            "title": "Action",
+            "type": "string"
+          },
+          "data_uri": {
+            "default": "",
+            "title": "Data Uri",
+            "type": "string"
+          },
+          "mime_type": {
+            "default": "",
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "extras": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Extras"
+          },
+          "categories": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Categories"
+          },
+          "flags": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Flags"
+          },
+          "root": {
+            "default": true,
+            "title": "Root",
+            "type": "boolean"
+          },
+          "user_id": {
+            "default": 0,
+            "title": "User Id",
+            "type": "integer"
+          },
+          "wait": {
+            "default": true,
+            "title": "Wait",
+            "type": "boolean"
+          }
+        },
+        "title": "send_intentArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "send_intentDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "system_settings",
+      "description": "Read/list/put/delete exact Android global/system/secure settings; returns command failure rather than claiming unsupported settings succeeded.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "get",
+            "title": "Action",
+            "type": "string"
+          },
+          "namespace": {
+            "default": "global",
+            "title": "Namespace",
+            "type": "string"
+          },
+          "key": {
+            "default": "",
+            "title": "Key",
+            "type": "string"
+          },
+          "value": {
+            "default": "",
+            "title": "Value",
+            "type": "string"
+          },
+          "user_id": {
+            "default": 0,
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "title": "system_settingsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "system_settingsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "agent_profile",
+      "description": "Apply/list/restore an Agent speed profile. Saves exact original animation/stay-awake values BEFORE changes and restores them (including absent keys) by profile_id on the same device.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "apply",
+            "title": "Action",
+            "type": "string"
+          },
+          "profile_id": {
+            "default": "",
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "zero_animation": {
+            "default": true,
+            "title": "Zero Animation",
+            "type": "boolean"
+          },
+          "stay_awake": {
+            "default": true,
+            "title": "Stay Awake",
+            "type": "boolean"
+          }
+        },
+        "title": "agent_profileArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "agent_profileDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "device_control",
+      "description": "Control wifi/bluetooth/mobile_data/airplane_mode, brightness, rotation, screen_size, density, volume, wake/sleep/dismiss_keyguard, notifications/quick_settings/collapse_panels, reboot/recovery/bootloader/shutdown. ROM support varies. Reboot/network changes may disconnect ADB.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "value": {
+            "default": "",
+            "title": "Value",
+            "type": "string"
+          },
+          "root": {
+            "default": true,
+            "title": "Root",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "device_controlArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "device_controlDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "system_property",
+      "description": "Read Android properties or set them using setprop; resetprop=true explicitly requests the installed Root resetprop utility. Does not install/assume Magisk.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "get",
+            "title": "Action",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "title": "Name",
+            "type": "string"
+          },
+          "value": {
+            "default": "",
+            "title": "Value",
+            "type": "string"
+          },
+          "resetprop": {
+            "default": false,
+            "title": "Resetprop",
+            "type": "boolean"
+          }
+        },
+        "title": "system_propertyArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "system_propertyDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "content_provider",
+      "description": "Direct zero-UI ContentProvider query/insert/update/delete/call/gettype with typed bindings. update/delete require explicit where ('1' intentionally means all rows). ROM/provider authorization still applies.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "query",
+            "title": "Action",
+            "type": "string"
+          },
+          "uri": {
+            "default": "",
+            "title": "Uri",
+            "type": "string"
+          },
+          "projection": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Projection"
+          },
+          "where": {
+            "default": "",
+            "title": "Where",
+            "type": "string"
+          },
+          "sort": {
+            "default": "",
+            "title": "Sort",
+            "type": "string"
+          },
+          "values": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Values"
+          },
+          "method": {
+            "default": "",
+            "title": "Method",
+            "type": "string"
+          },
+          "arg": {
+            "default": "",
+            "title": "Arg",
+            "type": "string"
+          },
+          "user_id": {
+            "default": 0,
+            "title": "User Id",
+            "type": "integer"
+          },
+          "root": {
+            "default": true,
+            "title": "Root",
+            "type": "boolean"
+          },
+          "max_output_bytes": {
+            "default": 65536,
+            "title": "Max Output Bytes",
+            "type": "integer"
+          }
+        },
+        "title": "content_providerArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "content_providerDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "shared_preferences",
+      "description": "Read/set/delete typed private XML preferences (string/int/long/float/boolean/set). Writes stop the app, preserve ownership/mode, back up old XML and check its hash. values={key:{type:'boolean',value:true}}; leaves app stopped.",
+      "inputSchema": {
+        "properties": {
+          "package": {
+            "title": "Package",
+            "type": "string"
+          },
+          "file": {
+            "title": "File",
+            "type": "string"
+          },
+          "action": {
+            "default": "read",
+            "title": "Action",
+            "type": "string"
+          },
+          "values": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Values"
+          },
+          "keys": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Keys"
+          },
+          "storage": {
+            "default": "ce",
+            "title": "Storage",
+            "type": "string"
+          },
+          "user_id": {
+            "default": 0,
+            "title": "User Id",
+            "type": "integer"
+          },
+          "stop_app": {
+            "default": true,
+            "title": "Stop App",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "package",
+          "file"
+        ],
+        "title": "shared_preferencesArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "shared_preferencesDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "sqlite_database",
+      "description": "Query a private SQLite DB without a phone sqlite3 binary; copies DB+WAL+SHM, parameterized SQL, BLOB base64 and bounded rows. write=true requires package+stop_app=true; backs up sidecars and installs an atomic checkpointed DB, leaving app stopped. Live reads are best effort. SQLCipher needs its own engine/key.",
+      "inputSchema": {
+        "properties": {
+          "database": {
+            "title": "Database",
+            "type": "string"
+          },
+          "sql": {
+            "default": "",
+            "title": "Sql",
+            "type": "string"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parameters"
+          },
+          "write": {
+            "default": false,
+            "title": "Write",
+            "type": "boolean"
+          },
+          "package": {
+            "default": "",
+            "title": "Package",
+            "type": "string"
+          },
+          "stop_app": {
+            "default": false,
+            "title": "Stop App",
+            "type": "boolean"
+          },
+          "max_rows": {
+            "default": 200,
+            "title": "Max Rows",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "database"
+        ],
+        "title": "sqlite_databaseArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "sqlite_databaseDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "app_data_archive",
+      "description": "Backup/restore one app's CE or DE private data as tar+SHA256 manifest. Stops app. Restore validates member paths/manifest, keeps pre-restore data backup, restores UID/SELinux; replaces data, leaves app stopped. Keystore/TEE/external storage excluded.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "package": {
+            "title": "Package",
+            "type": "string"
+          },
+          "local_path": {
+            "title": "Local Path",
+            "type": "string"
+          },
+          "storage": {
+            "default": "ce",
+            "title": "Storage",
+            "type": "string"
+          },
+          "user_id": {
+            "default": 0,
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "action",
+          "package",
+          "local_path"
+        ],
+        "title": "app_data_archiveArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "app_data_archiveDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "port_forward",
+      "description": "ADB forward/reverse list/add/remove for tcp/localabstract/localfilesystem/jdwp endpoints. tcp:0 allocates a port. No host shell; no-rebind avoids replacing another debugger's mapping.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "list",
+            "title": "Action",
+            "type": "string"
+          },
+          "local": {
+            "default": "",
+            "title": "Local",
+            "type": "string"
+          },
+          "remote": {
+            "default": "",
+            "title": "Remote",
+            "type": "string"
+          },
+          "reverse": {
+            "default": false,
+            "title": "Reverse",
+            "type": "boolean"
+          }
+        },
+        "title": "port_forwardArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "port_forwardDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "device_diagnostics",
+      "description": "Collect summary/memory/cpu/graphics/network/crashes/activity/services/power or bundle. Executes probes in one ADB session; optional persistent host report directory for regression evidence.",
+      "inputSchema": {
+        "properties": {
+          "kind": {
+            "default": "summary",
+            "title": "Kind",
+            "type": "string"
+          },
+          "package": {
+            "default": "",
+            "title": "Package",
+            "type": "string"
+          },
+          "output_dir": {
+            "default": "",
+            "title": "Output Dir",
+            "type": "string"
+          }
+        },
+        "title": "device_diagnosticsArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "device_diagnosticsDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "perform_gesture",
+      "description": "Perform a multi-point swipe path or pinch_in/pinch_out gesture through uiautomator2, avoiding repeated tap/swipe tool round trips.",
+      "inputSchema": {
+        "$defs": {
+          "Selector": {
+            "additionalProperties": false,
+            "description": "All supplied predicates are ANDed. Ambiguous actions need an explicit nth.",
+            "properties": {
+              "text": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text"
+              },
+              "text_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Contains"
+              },
+              "text_regex": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Text Regex"
+              },
+              "resource_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Resource Id"
+              },
+              "description": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description"
+              },
+              "description_contains": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Description Contains"
+              },
+              "class_name": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Class Name"
+              },
+              "package": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Package"
+              },
+              "hint": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Hint"
+              },
+              "clickable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Clickable"
+              },
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Enabled"
+              },
+              "checked": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Checked"
+              },
+              "focused": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Focused"
+              },
+              "scrollable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Scrollable"
+              },
+              "nth": {
+                "anyOf": [
+                  {
+                    "maximum": 10000,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Nth"
+              },
+              "within": {
+                "anyOf": [
+                  {
+                    "maxItems": 4,
+                    "minItems": 4,
+                    "prefixItems": [
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ],
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Within"
+              },
+              "index": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Index"
+              },
+              "snapshot_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Snapshot Id"
+              }
+            },
+            "title": "Selector",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "points": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Points"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Selector"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "percent": {
+            "default": 50,
+            "title": "Percent",
+            "type": "integer"
+          },
+          "duration": {
+            "default": 0.5,
+            "title": "Duration",
+            "type": "number"
+          }
+        },
+        "required": [
+          "action"
+        ],
+        "title": "perform_gestureArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "perform_gestureDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "webview_control",
+      "description": "Fast WebView/Chrome control using exposed DevTools sockets: discover/pages/dom/click/fill/evaluate/navigate/close. Uses DOM/CSS instead of pixel clicks; only debuggable WebViews. evaluate/click/fill require optional websocket-client.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "discover",
+            "title": "Action",
+            "type": "string"
+          },
+          "socket": {
+            "default": "",
+            "title": "Socket",
+            "type": "string"
+          },
+          "page_id": {
+            "default": "",
+            "title": "Page Id",
+            "type": "string"
+          },
+          "expression": {
+            "default": "",
+            "title": "Expression",
+            "type": "string"
+          },
+          "css": {
+            "default": "",
+            "title": "Css",
+            "type": "string"
+          },
+          "value": {
+            "default": "",
+            "title": "Value",
+            "type": "string"
+          },
+          "url": {
+            "default": "",
+            "title": "Url",
+            "type": "string"
+          },
+          "timeout": {
+            "default": 10,
+            "title": "Timeout",
+            "type": "number"
+          },
+          "max_nodes": {
+            "default": 100,
+            "title": "Max Nodes",
+            "type": "integer"
+          }
+        },
+        "title": "webview_controlArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "webview_controlDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "record_screen",
+      "description": "Background MP4 recording: start/status/stop/pull. Start immediately returns job_id; stop sends SIGINT for MP4 finalization, pull after completion. ROM screenrecord limits apply.",
+      "inputSchema": {
+        "properties": {
+          "action": {
+            "default": "start",
+            "title": "Action",
+            "type": "string"
+          },
+          "job_id": {
+            "default": "",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "seconds": {
+            "default": 30,
+            "title": "Seconds",
+            "type": "integer"
+          },
+          "bit_rate": {
+            "default": 4000000,
+            "title": "Bit Rate",
+            "type": "integer"
+          },
+          "local_path": {
+            "default": "",
+            "title": "Local Path",
+            "type": "string"
+          }
+        },
+        "title": "record_screenArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "record_screenDictOutput",
+        "type": "object"
+      }
+    },
+    {
+      "name": "compare_screenshot",
+      "description": "Pixel regression check against a local baseline PNG/JPEG. Captures one frame, compares dimensions/changed-pixel ratio/bounds, optionally saves current/diff; useful for Canvas UI verification.",
+      "inputSchema": {
+        "properties": {
+          "baseline_path": {
+            "title": "Baseline Path",
+            "type": "string"
+          },
+          "threshold": {
+            "default": 12,
+            "title": "Threshold",
+            "type": "integer"
+          },
+          "max_width": {
+            "default": 720,
+            "title": "Max Width",
+            "type": "integer"
+          },
+          "save_current_path": {
+            "default": "",
+            "title": "Save Current Path",
+            "type": "string"
+          },
+          "save_diff_path": {
+            "default": "",
+            "title": "Save Diff Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "baseline_path"
+        ],
+        "title": "compare_screenshotArguments",
+        "type": "object"
+      },
+      "outputSchema": {
+        "additionalProperties": true,
+        "title": "compare_screenshotDictOutput",
+        "type": "object"
+      }
+    }
+  ],
+  "resources": [
+    {
+      "name": "capabilities_resource",
+      "uri": "android://capabilities",
+      "description": "Android Root MCP v2 capability catalog and workflow guidance.",
+      "mimeType": "text/plain"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "android_development_task",
+      "description": "A reusable plan for efficient Android development/verification.",
+      "arguments": [
+        {
+          "name": "package",
+          "required": true
+        },
+        {
+          "name": "task",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

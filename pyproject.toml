@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "android-root-mcp"
+version = "2.0.0"
+description = "Root Android MCP with semantic automation, validated workflows, batch shell, data management, jobs and WebView DOM"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.28.1,<2",
+    "uiautomator2>=3.2.0,<4",
+    "Pillow>=10,<13",
+    "pydantic>=2.10,<3",
+]
+
+[project.optional-dependencies]
+webview = ["websocket-client>=1.8,<2"]
+dev = ["pytest>=8,<10", "ruff>=0.12,<1", "build>=1,<2"]
+
+[project.scripts]
+android-root-mcp = "src.server:main"
+
+[tool.setuptools]
+packages = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

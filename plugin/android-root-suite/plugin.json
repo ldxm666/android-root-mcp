@@ -1,0 +1,12 @@
+{
+  "name": "android-root-suite",
+  "description": "Root Android 开发套件：53 个 MCP 工具，包含原生语义交互、条件工作流、批量 Shell、Root 数据与设置、后台任务、WebView DOM 和开发验证。",
+  "version": "2.0.0",
+  "suggestedPrompts": [
+    "检查设备和实际 Root 能力，获取精简 UI 快照",
+    "把多步操作做成含条件等待和断言的可保存工作流",
+    "批量检查应用状态、私有配置与 SQLite 数据",
+    "部署 APK，采集本次启动后的崩溃、Logcat 和 LSPosed 证据",
+    "使用 WebView DOM 和 CSS 选择器完成 H5 测试"
+  ]
+}
